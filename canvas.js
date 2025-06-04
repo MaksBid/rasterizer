@@ -31,12 +31,12 @@ export function drawTriangle(points, color = 'black', width = 1) {
         throw new Error('drawTriangle requires exactly 3 points');
     }
 
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
+    // Draw a filled triangle
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(points[0][0], points[0][1]);
     ctx.lineTo(points[1][0], points[1][1]);
     ctx.lineTo(points[2][0], points[2][1]);
     ctx.closePath();
-    ctx.stroke();
+    ctx.fill();
 }

@@ -50,7 +50,7 @@ export const octahedron = {
 };
 
 export const triangularPrism = {
-    vertices: [
+    vertices: [ // x - left-right, y - up-down, z - front-back
         [0, 0, 0],
         [100, 0, 0],
         [50, 80, 0],
@@ -63,7 +63,21 @@ export const triangularPrism = {
         [3, 4], [4, 5], [5, 3], // back triangle
         [0, 3], [1, 4], [2, 5]  // verticals
     ],
-    color: 'yellow'
+    color: 'yellow',
+    triangleMesh: [
+        [0, 1, 2], // front triangle
+        [3, 4, 5], // back triangle
+
+        [1, 3, 0], // top face
+        [1, 3, 4], 
+
+        [2, 4, 1], // bottom left face
+        [2, 4, 5], 
+
+        [0, 5, 2], // bottom right face
+        [0, 5, 3] 
+    ],
+    triangleMeshColor: '#888800' // Color for the triangle mesh
 };
 
 export const pentagonalPrism = {

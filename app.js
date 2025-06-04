@@ -35,7 +35,9 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
     let editableObjects = objects.map(object => ({
         vertices: object.vertices.map(vertex => [...vertex]),
         edges: object.edges,
-        color: object.color || 'black'
+        color: object.color || 'black',
+        triangleMesh: object.triangleMesh,
+        triangleMeshColor: object.triangleMeshColor || 'black'
     }));
 
     // Translate
@@ -47,7 +49,9 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
     editableObjects = editableObjects.map(object => ({
         vertices: object.vertices.map(vertex => vectorSubtract(vertex, cameraPosition)),
         edges: object.edges, 
-        color: object.color || 'black'
+        color: object.color || 'black',
+        triangleMesh: object.triangleMesh,
+        triangleMeshColor: object.triangleMeshColor || 'black'
     }));
 
     // Rotate camera around X-axis (pitch) and Y-axis (yaw)
@@ -60,9 +64,12 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
     editableObjects = editableObjects.map(object => ({
         vertices: object.vertices.map(vertex => rotateY(rotateX(vertex, cameraPitch), cameraYaw)),
         edges: object.edges,
-        color: object.color || 'black'
+        color: object.color || 'black',
+        triangleMesh: object.triangleMesh,
+        triangleMeshColor: object.triangleMeshColor || 'black'
     }));
 
+    console.log(editableObjects);
     // Filter out points that are behind the camera
     console.log(editableLines);
     editablePoints = editablePoints.filter(point => isInFront(point));
@@ -72,6 +79,7 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
         // Remove edges that connect to vertices that are behind the camera
         object.edges = object.edges.filter(edge => isInFront(object.vertices[edge[0]]) && isInFront(object.vertices[edge[1]]));
         object.vertices = object.vertices.filter(vertex => isInFront(vertex));
+        // object.triangleMesh = object.triangleMesh;
     });
 
     // Project to 2D
@@ -84,7 +92,9 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
     editableObjects = editableObjects.map(object => ({
         vertices: object.vertices.map(vertex => applyPerspectiveProjection(vertex, FOV, aspectRatio)),
         edges: object.edges,
-        color: object.color || 'black'
+        color: object.color || 'black',
+        triangleMesh: object.triangleMesh,
+        triangleMeshColor: object.triangleMeshColor || 'black'
     }));
 
 
@@ -97,7 +107,9 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
     editableObjects = editableObjects.map(object => ({
         vertices: object.vertices.map(vertex => mapToCanvasCoordinates(vertex, width, height)),
         edges: object.edges, 
-        color: object.color || 'black'
+        color: object.color || 'black',
+        triangleMesh: object.triangleMesh,
+        triangleMeshColor: object.triangleMeshColor || 'black'
     }));
 
     // Draw the projected points
@@ -115,6 +127,16 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
             const end = object.vertices[edge[1]];
             drawLine(start[0], start[1], end[0], end[1], object.color, 2);
         });
+    });
+    console.log(editableObjects);
+    // Draw the triangle mesh if it exists
+    editableObjects.forEach(object => {
+        if (object.triangleMesh) {
+            object.triangleMesh.forEach(triangle => {
+                const points = triangle.map(index => object.vertices[index]);
+                drawTriangle(points, object.triangleMeshColor);
+            });
+        }
     });
 }
 
