@@ -1,0 +1,13 @@
+canvas {
+    display: block;
+    border: 1px solid white;
+    border-radius: 5px;
+    background: #0f0f0f;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #0f0f0f;
+}
