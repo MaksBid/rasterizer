@@ -51,25 +51,14 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
     }));
 
     // Rotate camera around X-axis (pitch) and Y-axis (yaw)
-    editablePoints = editablePoints.map(point => rotateX(point, cameraPitch));
-    editablePoints = editablePoints.map(point => rotateY(point, cameraYaw));
+    editablePoints = editablePoints.map(point => rotateY(rotateX(point, cameraPitch), cameraYaw));
     editableLines = editableLines.map(line => [
-        rotateX(line[0], cameraPitch),
-        rotateX(line[1], cameraPitch)
+        rotateY(rotateX(line[0], cameraPitch), cameraYaw),
+        rotateY(rotateX(line[1], cameraPitch), cameraYaw)
     ]);
-    editableLines = editableLines.map(line => [
-        rotateY(line[0], cameraYaw),
-        rotateY(line[1], cameraYaw)
-    ]);
-    // Pitch the objects
+    // Pitch and yaw the objects
     editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => rotateX(vertex, cameraPitch)),
-        edges: object.edges,
-        color: object.color || 'black'
-    }));
-    // Yaw the objects
-    editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => rotateY(vertex, cameraYaw)),
+        vertices: object.vertices.map(vertex => rotateY(rotateX(vertex, cameraPitch), cameraYaw)),
         edges: object.edges,
         color: object.color || 'black'
     }));
