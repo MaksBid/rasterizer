@@ -1,5 +1,5 @@
 import { drawLine, clear, drawTriangle, drawCircle } from './canvas.js';
-import { applyPerspectiveProjection, mapToCanvasCoordinates, vectorSubtract, rotateX, rotateY, rotateZ } from './math.js';
+import { applyPerspectiveProjection, mapToCanvasCoordinates, vectorSubtract, rotateX, rotateY, rotateZ, isInFront } from './math.js';
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
 
 const canvas = document.getElementById('canvas');
@@ -63,6 +63,17 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
         color: object.color || 'black'
     }));
 
+    // Filter out points that are behind the camera
+    console.log(editableLines);
+    editablePoints = editablePoints.filter(point => isInFront(point));
+    // One point of a line must be in front of the camera for the line to be drawn
+    editableLines = editableLines.filter(line => isInFront(line[0]) && isInFront(line[1]));
+    editableObjects.forEach(object => {
+        // Remove edges that connect to vertices that are behind the camera
+        object.edges = object.edges.filter(edge => isInFront(object.vertices[edge[0]]) && isInFront(object.vertices[edge[1]]));
+        object.vertices = object.vertices.filter(vertex => isInFront(vertex));
+    });
+
     // Project to 2D
     // Apply perspective projection
     editablePoints = editablePoints.map(point => applyPerspectiveProjection(point, FOV, aspectRatio));
@@ -72,7 +83,7 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
     ]);
     editableObjects = editableObjects.map(object => ({
         vertices: object.vertices.map(vertex => applyPerspectiveProjection(vertex, FOV, aspectRatio)),
-        edges: object.edges, 
+        edges: object.edges,
         color: object.color || 'black'
     }));
 

@@ -124,3 +124,12 @@ export function rotateZ(point, angle) {
         point[2]
     ];
 }
+
+export function isInFront(point) {
+    // Check if the point's z is lower than zero
+    // This assumes a right-handed coordinate system where the camera looks down the negative Z-axis
+    if (point.length !== 3) {
+        throw new Error('Point must be a 3D vector');
+    }
+    return point[2] < 0;
+}
