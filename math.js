@@ -86,3 +86,41 @@ export function mapToCanvasCoordinates(point, canvasWidth, canvasHeight) {
         (1 - point[1]) * (canvasHeight / 2)
     ];
 }
+
+export function rotateX(point, angle) {
+    // You'd have to do this by multiplying a vector by a rotation matrix,
+    // but for simplicity, we'll just apply the rotation directly
+    const rad = (angle * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    return [ // Counter-clockwise rotation around the X-axis
+        point[0],
+        point[1] * cos - point[2] * sin,
+        point[1] * sin + point[2] * cos
+    ];
+}
+
+export function rotateY(point, angle) {
+    const rad = (angle * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    return [ // Counter-clockwise rotation around the Y-axis
+        point[0] * cos + point[2] * sin,
+        point[1],
+        -point[0] * sin + point[2] * cos
+    ];
+}
+
+export function rotateZ(point, angle) {
+    const rad = (angle * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    return [ // Counter-clockwise rotation around the Z-axis
+        point[0] * cos - point[1] * sin,
+        point[0] * sin + point[1] * cos,
+        point[2]
+    ];
+}
