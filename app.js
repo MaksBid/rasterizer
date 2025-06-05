@@ -3,11 +3,9 @@ import { applyPerspectiveProjection, mapToCanvasCoordinates, vectorSubtract, rot
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
 
 const canvas = document.getElementById('canvas');
-const width = canvas.width;
-const height = canvas.height;
-const halfWidth = width / 2;
-const halfHeight = height / 2;
-const aspectRatio = width / height;
+let width = canvas.width;
+let height = canvas.height;
+let aspectRatio = width / height;
 
 // const Triangle3D = [
 //     [150, 50, 100],
@@ -27,7 +25,10 @@ const testLines = [
 ]
 const objects = [triangularPrism];
 
-function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
+// Initial render (called inside resizeCanvas)
+resizeCanvas();
+
+function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
     clear();
 
     let editablePoints = points.map(point => [...point]);
@@ -99,13 +100,13 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
 
 
     // Map to canvas coordinates
-    editablePoints = editablePoints.map(point => mapToCanvasCoordinates(point, width, height));
+    editablePoints = editablePoints.map(point => mapToCanvasCoordinates(point, canvasWidth, canvasHeight));
     editableLines = editableLines.map(line => [
-        mapToCanvasCoordinates(line[0], width, height),
-        mapToCanvasCoordinates(line[1], width, height)
+        mapToCanvasCoordinates(line[0], canvasWidth, canvasHeight),
+        mapToCanvasCoordinates(line[1], canvasWidth, canvasHeight)
     ]);
     editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => mapToCanvasCoordinates(vertex, width, height)),
+        vertices: object.vertices.map(vertex => mapToCanvasCoordinates(vertex, canvasWidth, canvasHeight)),
         edges: object.edges, 
         color: object.color || 'black',
         triangleMesh: object.triangleMesh,
@@ -139,8 +140,6 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200]) {
         }
     });
 }
-
-render(testPoints, testLines, objects, cameraPosition);
 
 // When the arrow keys are pressed, move the camera
 document.addEventListener('keydown', (event) => {
@@ -177,5 +176,16 @@ document.addEventListener('keydown', (event) => {
             cameraPitch += 5;
             break;
     }
-    render(testPoints, testLines, objects, cameraPosition);
+    render(testPoints, testLines, objects, cameraPosition, width, height);
 });
+
+function resizeCanvas() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    aspectRatio = width / height;
+    render(testPoints, testLines, objects, cameraPosition, width, height);
+}
+
+window.addEventListener('resize', resizeCanvas);
