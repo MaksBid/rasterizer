@@ -23,10 +23,11 @@ const testLines = [
     [[0, -100, 0], [0, 100, 0]],
     [[0, 0, -100], [0, 0, 100]],
 ]
-const objects = [triangularPrism];
+const objects = []; //triangularPrism
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
+updateDisplay(cameraPosition, [cameraPitch, cameraYaw]);
 
 function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
     clear();
@@ -70,9 +71,7 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
         triangleMeshColor: object.triangleMeshColor || 'black'
     }));
 
-    console.log(editableObjects);
     // Filter out points that are behind the camera
-    console.log(editableLines);
     editablePoints = editablePoints.filter(point => isInFront(point));
     // One point of a line must be in front of the camera for the line to be drawn
     editableLines = editableLines.filter(line => isInFront(line[0]) && isInFront(line[1]));
@@ -129,7 +128,6 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
             drawLine(start[0], start[1], end[0], end[1], object.color, 2);
         });
     });
-    console.log(editableObjects);
     // Draw the triangle mesh if it exists
     editableObjects.forEach(object => {
         if (object.triangleMesh) {
@@ -176,6 +174,7 @@ document.addEventListener('keydown', (event) => {
             cameraPitch += 5;
             break;
     }
+    updateDisplay(cameraPosition, [cameraPitch, cameraYaw]);
     render(testPoints, testLines, objects, cameraPosition, width, height);
 });
 
@@ -186,6 +185,14 @@ function resizeCanvas() {
     canvas.height = height;
     aspectRatio = width / height;
     render(testPoints, testLines, objects, cameraPosition, width, height);
+}
+
+function updateDisplay([cameraX, cameraY, cameraZ], [cameraPitch, cameraYaw]) {
+    document.getElementById('x').textContent = "X: " + cameraX.toFixed(2);
+    document.getElementById('y').textContent = "Y: " + cameraY.toFixed(2);
+    document.getElementById('z').textContent = "Z: " + cameraZ.toFixed(2);
+    document.getElementById('pitch').textContent = "Pitch: " + cameraPitch.toFixed(2) + "°";
+    document.getElementById('yaw').textContent = "Yaw: " + cameraYaw.toFixed(2) + "°";
 }
 
 window.addEventListener('resize', resizeCanvas);
