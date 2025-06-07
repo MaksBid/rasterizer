@@ -185,10 +185,10 @@ document.addEventListener('keydown', (event) => {
             orientationMatrix = multiplyMatrices(yawRotationMatrix(-5), orientationMatrix); // Rotate left by 5 degrees
             break;
         case 'w': // Rotate up (pitch)
-            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(-5)); // Rotate down by 5 degrees
+            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(5)); // Rotate down by 5 degrees
             break;
         case 's': // Rotate down (pitch)
-            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(5), ); // Rotate up by 5 degrees
+            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(-5), ); // Rotate up by 5 degrees
             break;
     }
     updateDisplay(cameraPosition, orientationMatrix);

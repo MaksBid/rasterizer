@@ -151,7 +151,7 @@ export function yawRotationMatrix(delta) {
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
 
-    return [
+    return [ // Clockwise rotation around the Y-axis
         [cos, 0, -sin],
         [0, 1, 0],
         [sin, 0, cos]
@@ -163,10 +163,10 @@ export function pitchRotationMatrix(delta) {
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
 
-    return [
+    return [ // Clockwise rotation around the X-axis
         [1, 0, 0],
-        [0, cos, sin],
-        [0, -sin, cos]
+        [0, cos, -sin],
+        [0, sin, cos]
     ];
 }
 
