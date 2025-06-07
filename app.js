@@ -19,6 +19,7 @@ let orientationMatrix = [
     [0, 0, 1]  // Z-axis
 ]
 const FOV = 90; // Field of View in degrees 
+const sensitivity = 5; // Sensitivity for camera rotation
 
 const axisLength = 100; // Length of the axis lines
 
@@ -36,7 +37,7 @@ const testLines = [
     [[0, 0, axisLength], [5, 0, axisLength - 10]],
     [[0, 0, axisLength], [-5, 0, axisLength - 10]]
 ]
-const objects = []; 
+const objects = [triangularPrism]; 
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
@@ -137,14 +138,6 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
     editableLines.forEach(line => {
         drawLine(line[0][0], line[0][1], line[1][0], line[1][1], 'white', 2);
     });
-    // Draw the projected objects
-    editableObjects.forEach(object => {
-        object.edges.forEach(edge => {
-            const start = object.vertices[edge[0]];
-            const end = object.vertices[edge[1]];
-            drawLine(start[0], start[1], end[0], end[1], object.color, 2);
-        });
-    });
     // Draw the triangle mesh if it exists
     editableObjects.forEach(object => {
         if (object.triangleMesh) {
@@ -153,6 +146,14 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
                 drawTriangle(points, object.triangleMeshColor);
             });
         }
+    });    
+    // Draw the projected objects
+    editableObjects.forEach(object => {
+        object.edges.forEach(edge => {
+            const start = object.vertices[edge[0]];
+            const end = object.vertices[edge[1]];
+            drawLine(start[0], start[1], end[0], end[1], object.color, 2);
+        });
     });
 }
 
@@ -179,16 +180,16 @@ document.addEventListener('keydown', (event) => {
             cameraPosition[2] -= step;
             break;
         case 'd': // Rotate right (yaw)
-            orientationMatrix = multiplyMatrices(yawRotationMatrix(5), orientationMatrix); // Rotate right by 5 degrees
+            orientationMatrix = multiplyMatrices(yawRotationMatrix(sensitivity), orientationMatrix); // Rotate right by 5 degrees
             break;
         case 'a': // Rotate left (yaw)
-            orientationMatrix = multiplyMatrices(yawRotationMatrix(-5), orientationMatrix); // Rotate left by 5 degrees
+            orientationMatrix = multiplyMatrices(yawRotationMatrix(-sensitivity), orientationMatrix); // Rotate left by 5 degrees
             break;
         case 'w': // Rotate up (pitch)
-            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(5)); // Rotate down by 5 degrees
+            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(sensitivity)); // Rotate down by 5 degrees
             break;
         case 's': // Rotate down (pitch)
-            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(-5), ); // Rotate up by 5 degrees
+            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(-sensitivity)); // Rotate up by 5 degrees
             break;
     }
     updateDisplay(cameraPosition, orientationMatrix);
