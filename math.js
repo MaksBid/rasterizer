@@ -22,6 +22,13 @@ export function crossProduct(v1, v2) {
     ];
 }
 
+export function transpose(matrix) {
+    if (!Array.isArray(matrix) || !Array.isArray(matrix[0])) {
+        throw new Error('Input must be a 2D array (matrix)');
+    }
+    return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
+}
+
 export function vectorSubtract(v1, v2) {
     if (v1.length !== v2.length) {
         throw new Error('Vectors must be of the same length');
@@ -45,6 +52,20 @@ export function multiplyMatrices(m1, m2) {
         }
     }
 
+    return result;
+}
+
+export function multiplyMatVec(matrix, vector) {
+    if (matrix[0].length !== vector.length) {
+        throw new Error('Matrix columns must match vector length');
+    }
+
+    const result = Array(matrix.length).fill(0);
+    for (let i = 0; i < matrix.length; i++) {
+        for (let j = 0; j < vector.length; j++) {
+            result[i] += matrix[i][j] * vector[j];
+        }
+    }
     return result;
 }
 
@@ -122,6 +143,30 @@ export function rotateZ(point, angle) {
         point[0] * cos - point[1] * sin,
         point[0] * sin + point[1] * cos,
         point[2]
+    ];
+}
+
+export function yawRotationMatrix(delta) {
+    const rad = (delta * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    return [
+        [cos, 0, -sin],
+        [0, 1, 0],
+        [sin, 0, cos]
+    ];
+}
+
+export function pitchRotationMatrix(delta) {
+    const rad = (delta * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+
+    return [
+        [1, 0, 0],
+        [0, cos, sin],
+        [0, -sin, cos]
     ];
 }
 

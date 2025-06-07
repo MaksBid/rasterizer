@@ -1,5 +1,5 @@
 import { drawLine, clear, drawTriangle, drawCircle } from './canvas.js';
-import { applyPerspectiveProjection, mapToCanvasCoordinates, vectorSubtract, rotateX, rotateY, rotateZ, isInFront } from './math.js';
+import { applyPerspectiveProjection, mapToCanvasCoordinates, vectorSubtract, isInFront, multiplyMatVec, transpose, multiplyMatrices, yawRotationMatrix, pitchRotationMatrix } from './math.js';
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
 
 const canvas = document.getElementById('canvas');
@@ -13,11 +13,14 @@ let aspectRatio = width / height;
 //     [150, 150, 0]
 // ];
 let cameraPosition = [0, 0, 200];
-let cameraPitch = 0; // Camera pitch in degrees
-let cameraYaw = 0; // Camera yaw in degrees
+let orientationMatrix = [
+    [1, 0, 0], // X-axis
+    [0, 1, 0], // Y-axis
+    [0, 0, 1]  // Z-axis
+]
 const FOV = 90; // Field of View in degrees 
 
-const axisLength = 200; // Length of the axis lines
+const axisLength = 100; // Length of the axis lines
 
 const testPoints = [[80, 50, 50]];
 const testLines = [
@@ -33,15 +36,12 @@ const testLines = [
     [[0, 0, axisLength], [5, 0, axisLength - 10]],
     [[0, 0, axisLength], [-5, 0, axisLength - 10]]
 ]
-const objects = [triangularPrism]; 
+const objects = []; 
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
-updateDisplay(cameraPosition, [cameraPitch, cameraYaw]);
+updateDisplay(cameraPosition, orientationMatrix);
 
-
-// TODO: Fix the axis directions
- 
 function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
     clear();
 
@@ -69,16 +69,19 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
         triangleMeshColor: object.triangleMeshColor || 'black'
     }));
 
-    // Rotate camera around X-axis (pitch) and Y-axis (yaw)
-    // rotateY and rotateX are clockwise, so we need to negate the angles for the camera
-    editablePoints = editablePoints.map(point => rotateY(rotateX(point, -cameraPitch), -cameraYaw));
+    // Rotate around the camera
+    editablePoints = editablePoints.map(point => 
+        multiplyMatVec(transpose(orientationMatrix), point)
+    )
     editableLines = editableLines.map(line => [
-        rotateY(rotateX(line[0], -cameraPitch), -cameraYaw),
-        rotateY(rotateX(line[1], -cameraPitch), -cameraYaw)
+        multiplyMatVec(transpose(orientationMatrix), line[0]),
+        multiplyMatVec(transpose(orientationMatrix), line[1])
     ]);
-    // Pitch and yaw the objects
+    // Rotate objects
     editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => rotateY(rotateX(vertex, -cameraPitch), -cameraYaw)),
+        vertices: object.vertices.map(vertex =>
+            multiplyMatVec(transpose(orientationMatrix), vertex)
+        ),
         edges: object.edges,
         color: object.color || 'black',
         triangleMesh: object.triangleMesh,
@@ -176,19 +179,19 @@ document.addEventListener('keydown', (event) => {
             cameraPosition[2] -= step;
             break;
         case 'd': // Rotate right (yaw)
-            cameraYaw = (cameraYaw + 5) % 360; // Ensure yaw stays within (-359) - +359 degrees
+            orientationMatrix = multiplyMatrices(yawRotationMatrix(5), orientationMatrix); // Rotate right by 5 degrees
             break;
         case 'a': // Rotate left (yaw)
-            cameraYaw = (cameraYaw - 5) % 360; // Ensure yaw stays within (-359) - +359 degrees
+            orientationMatrix = multiplyMatrices(yawRotationMatrix(-5), orientationMatrix); // Rotate left by 5 degrees
             break;
-        case 'w': // Rotate down (pitch)
-            cameraPitch = (cameraPitch + 5) % 360; // Ensure pitch stays within (-359) - +359 degrees
+        case 'w': // Rotate up (pitch)
+            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(-5)); // Rotate down by 5 degrees
             break;
-        case 's': // Rotate up (pitch)
-            cameraPitch = (cameraPitch - 5) % 360; // Ensure pitch stays within (-359) - +359 degrees
+        case 's': // Rotate down (pitch)
+            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(5), ); // Rotate up by 5 degrees
             break;
     }
-    updateDisplay(cameraPosition, [cameraPitch, cameraYaw]);
+    updateDisplay(cameraPosition, orientationMatrix);
     render(testPoints, testLines, objects, cameraPosition, width, height);
 });
 
@@ -201,12 +204,15 @@ function resizeCanvas() {
     render(testPoints, testLines, objects, cameraPosition, width, height);
 }
 
-function updateDisplay([cameraX, cameraY, cameraZ], [cameraPitch, cameraYaw]) {
+function updateDisplay([cameraX, cameraY, cameraZ], orientationMatrix) {
     document.getElementById('x').textContent = "X: " + cameraX.toFixed(2);
     document.getElementById('y').textContent = "Y: " + cameraY.toFixed(2);
     document.getElementById('z').textContent = "Z: " + cameraZ.toFixed(2);
-    document.getElementById('pitch').textContent = "Pitch: " + cameraPitch.toFixed(2) + "°";
-    document.getElementById('yaw').textContent = "Yaw: " + cameraYaw.toFixed(2) + "°";
+    let textMatrix = "Orientation Matrix:\n";
+    orientationMatrix.forEach(row => {
+        textMatrix += "[" + row.map(value => value.toFixed(2)).join(' ') + "]" + '\n';
+    });
+    document.getElementById('orientation').textContent = textMatrix;
 }
 
 window.addEventListener('resize', resizeCanvas);
