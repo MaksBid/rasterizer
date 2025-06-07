@@ -82,8 +82,8 @@ export function applyPerspectiveProjection(translatedPoint, fov, aspectRatio) { 
 
 export function mapToCanvasCoordinates(point, canvasWidth, canvasHeight) {
     return [
-        (point[0] + 1) * (canvasWidth / 2),
-        (1 - point[1]) * (canvasHeight / 2)
+        (1 - point[0]) * (canvasWidth / 2),
+        (1 + point[1]) * (canvasHeight / 2)
     ];
 }
 
@@ -94,7 +94,7 @@ export function rotateX(point, angle) {
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
 
-    return [ // Counter-clockwise rotation around the X-axis
+    return [ // Clockwise rotation around the X-axis
         point[0],
         point[1] * cos - point[2] * sin,
         point[1] * sin + point[2] * cos
@@ -106,10 +106,10 @@ export function rotateY(point, angle) {
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
 
-    return [ // Counter-clockwise rotation around the Y-axis
-        point[0] * cos + point[2] * sin,
+    return [ // Clockwise rotation around the Y-axis
+        point[0] * cos - point[2] * sin,
         point[1],
-        -point[0] * sin + point[2] * cos
+        point[0] * sin + point[2] * cos
     ];
 }
 
@@ -118,7 +118,7 @@ export function rotateZ(point, angle) {
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
 
-    return [ // Counter-clockwise rotation around the Z-axis
+    return [ // Clockwise rotation around the Z-axis
         point[0] * cos - point[1] * sin,
         point[0] * sin + point[1] * cos,
         point[2]

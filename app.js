@@ -17,18 +17,31 @@ let cameraPitch = 0; // Camera pitch in degrees
 let cameraYaw = 0; // Camera yaw in degrees
 const FOV = 90; // Field of View in degrees 
 
+const axisLength = 200; // Length of the axis lines
+
 const testPoints = [[80, 50, 50]];
 const testLines = [
-    [[-100, 0, 0], [100, 0, 0]],
-    [[0, -100, 0], [0, 100, 0]],
-    [[0, 0, -100], [0, 0, 100]],
+    // Axis lines
+    [[-axisLength, 0, 0], [axisLength, 0, 0]],
+    [[0, -axisLength, 0], [0, axisLength, 0]],
+    [[0, 0, -axisLength], [0, 0, axisLength]],
+    // Arrows
+    [[axisLength, 0, 0], [axisLength - 10, 5, 0]],
+    [[axisLength, 0, 0], [axisLength - 10, -5, 0]],
+    [[0, axisLength, 0], [5, axisLength - 10, 0]],
+    [[0, axisLength, 0], [-5, axisLength - 10, 0]],
+    [[0, 0, axisLength], [5, 0, axisLength - 10]],
+    [[0, 0, axisLength], [-5, 0, axisLength - 10]]
 ]
-const objects = []; //triangularPrism
+const objects = [triangularPrism]; 
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
 updateDisplay(cameraPosition, [cameraPitch, cameraYaw]);
 
+
+// TODO: Fix the axis directions
+ 
 function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
     clear();
 
@@ -57,14 +70,15 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
     }));
 
     // Rotate camera around X-axis (pitch) and Y-axis (yaw)
-    editablePoints = editablePoints.map(point => rotateY(rotateX(point, cameraPitch), cameraYaw));
+    // rotateY and rotateX are clockwise, so we need to negate the angles for the camera
+    editablePoints = editablePoints.map(point => rotateY(rotateX(point, -cameraPitch), -cameraYaw));
     editableLines = editableLines.map(line => [
-        rotateY(rotateX(line[0], cameraPitch), cameraYaw),
-        rotateY(rotateX(line[1], cameraPitch), cameraYaw)
+        rotateY(rotateX(line[0], -cameraPitch), -cameraYaw),
+        rotateY(rotateX(line[1], -cameraPitch), -cameraYaw)
     ]);
     // Pitch and yaw the objects
     editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => rotateY(rotateX(vertex, cameraPitch), cameraYaw)),
+        vertices: object.vertices.map(vertex => rotateY(rotateX(vertex, -cameraPitch), -cameraYaw)),
         edges: object.edges,
         color: object.color || 'black',
         triangleMesh: object.triangleMesh,
@@ -143,35 +157,35 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
 document.addEventListener('keydown', (event) => {
     const step = 10; // Step size for camera movement
     switch (event.key) {
-        case 'i':
-            cameraPosition[1] -= step;
-            break;
-        case 'k':
-            cameraPosition[1] += step;
-            break;
         case 'ArrowLeft':
-            cameraPosition[0] += step;
-            break;
-        case 'ArrowRight':
             cameraPosition[0] -= step;
             break;
-        case 'ArrowUp': // Move forward
-            cameraPosition[2] -= step;
+        case 'ArrowRight':
+            cameraPosition[0] += step;
             break;
-        case 'ArrowDown': // Move backward
+        case 'i':
+            cameraPosition[1] += step;
+            break;
+        case 'k':
+            cameraPosition[1] -= step;
+            break;
+        case 'ArrowUp': // Move forward
             cameraPosition[2] += step;
             break;
-        case 'd': // Rotate left (yaw)
-            cameraYaw -= 5;
+        case 'ArrowDown': // Move backward
+            cameraPosition[2] -= step;
             break;
-        case 'a': // Rotate right (yaw)
-            cameraYaw += 5;
+        case 'd': // Rotate right (yaw)
+            cameraYaw = (cameraYaw + 5) % 360; // Ensure yaw stays within (-359) - +359 degrees
             break;
-        case 's': // Rotate up (pitch)
-            cameraPitch -= 5;
+        case 'a': // Rotate left (yaw)
+            cameraYaw = (cameraYaw - 5) % 360; // Ensure yaw stays within (-359) - +359 degrees
             break;
         case 'w': // Rotate down (pitch)
-            cameraPitch += 5;
+            cameraPitch = (cameraPitch + 5) % 360; // Ensure pitch stays within (-359) - +359 degrees
+            break;
+        case 's': // Rotate up (pitch)
+            cameraPitch = (cameraPitch - 5) % 360; // Ensure pitch stays within (-359) - +359 degrees
             break;
     }
     updateDisplay(cameraPosition, [cameraPitch, cameraYaw]);
