@@ -46,115 +46,71 @@ updateDisplay(cameraPosition, orientationMatrix);
 function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
     clear();
 
-    let editablePoints = points.map(point => [...point]);
-    let editableLines = lines.map(line => line.map(point => [...point]));
-    let editableObjects = objects.map(object => ({
-        vertices: object.vertices.map(vertex => [...vertex]),
-        edges: object.edges,
-        color: object.color || 'black',
-        triangleMesh: object.triangleMesh,
-        triangleMeshColor: object.triangleMeshColor || 'black'
-    }));
-
-    // Translate
-    editablePoints = editablePoints.map(point => vectorSubtract(point, cameraPosition));
-    editableLines = editableLines.map(line => [
-        vectorSubtract(line[0], cameraPosition),
-        vectorSubtract(line[1], cameraPosition)
-    ]);
-    editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => vectorSubtract(vertex, cameraPosition)),
-        edges: object.edges, 
-        color: object.color || 'black',
-        triangleMesh: object.triangleMesh,
-        triangleMeshColor: object.triangleMeshColor || 'black'
-    }));
-
-    // Rotate around the camera
-    editablePoints = editablePoints.map(point => 
-        multiplyMatVec(transpose(orientationMatrix), point)
-    )
-    editableLines = editableLines.map(line => [
-        multiplyMatVec(transpose(orientationMatrix), line[0]),
-        multiplyMatVec(transpose(orientationMatrix), line[1])
-    ]);
-    // Rotate objects
-    editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex =>
-            multiplyMatVec(transpose(orientationMatrix), vertex)
-        ),
-        edges: object.edges,
-        color: object.color || 'black',
-        triangleMesh: object.triangleMesh,
-        triangleMeshColor: object.triangleMeshColor || 'black'
-    }));
-
-    // Filter out points that are behind the camera
-    editablePoints = editablePoints.filter(point => isInFront(point));
-    // One point of a line must be in front of the camera for the line to be drawn
-    editableLines = editableLines.filter(line => isInFront(line[0]) && isInFront(line[1]));
-    editableObjects.forEach(object => {
-        // Remove edges that connect to vertices that are behind the camera
-        object.edges = object.edges.filter(edge => isInFront(object.vertices[edge[0]]) && isInFront(object.vertices[edge[1]]));
-        object.vertices = object.vertices.filter(vertex => isInFront(vertex));
-        // object.triangleMesh = object.triangleMesh;
-    });
-
-    // Project to 2D
-    // Apply perspective projection
-    editablePoints = editablePoints.map(point => applyPerspectiveProjection(point, FOV, aspectRatio));
-    editableLines = editableLines.map(line => [
-        applyPerspectiveProjection(line[0], FOV, aspectRatio),
-        applyPerspectiveProjection(line[1], FOV, aspectRatio)
-    ]);
-    editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => applyPerspectiveProjection(vertex, FOV, aspectRatio)),
-        edges: object.edges,
-        color: object.color || 'black',
-        triangleMesh: object.triangleMesh,
-        triangleMeshColor: object.triangleMeshColor || 'black'
-    }));
-
-
-    // Map to canvas coordinates
-    editablePoints = editablePoints.map(point => mapToCanvasCoordinates(point, canvasWidth, canvasHeight));
-    editableLines = editableLines.map(line => [
-        mapToCanvasCoordinates(line[0], canvasWidth, canvasHeight),
-        mapToCanvasCoordinates(line[1], canvasWidth, canvasHeight)
-    ]);
-    editableObjects = editableObjects.map(object => ({
-        vertices: object.vertices.map(vertex => mapToCanvasCoordinates(vertex, canvasWidth, canvasHeight)),
-        edges: object.edges, 
-        color: object.color || 'black',
-        triangleMesh: object.triangleMesh,
-        triangleMeshColor: object.triangleMeshColor || 'black'
-    }));
-
-    // Draw the projected points
-    editablePoints.forEach(point => {
-        drawCircle(point[0], point[1], 5, 'red', true);
-    });
-    // Draw the projected lines
-    editableLines.forEach(line => {
-        drawLine(line[0][0], line[0][1], line[1][0], line[1][1], 'white', 2);
-    });
-    // Draw the triangle mesh if it exists
-    editableObjects.forEach(object => {
-        if (object.triangleMesh) {
-            object.triangleMesh.forEach(triangle => {
-                const points = triangle.map(index => object.vertices[index]);
-                drawTriangle(points, object.triangleMeshColor);
-            });
+    // Draw the points
+    points.forEach(point => {
+        const pointOnCanvas = getPointOnCanvas(point, cameraPosition, canvasWidth, canvasHeight);
+        if (pointOnCanvas) { // We would get null if the point is behind the camera
+            drawCircle(pointOnCanvas[0], pointOnCanvas[1], 5, 'red', true);
         }
-    });    
-    // Draw the projected objects
-    editableObjects.forEach(object => {
+    });
+    // Draw the lines
+    lines.forEach(line => {
+        const start = getPointOnCanvas(line[0], cameraPosition, canvasWidth, canvasHeight);
+        const end = getPointOnCanvas(line[1], cameraPosition, canvasWidth, canvasHeight);
+        if (start && end) { 
+            drawLine(start[0], start[1], end[0], end[1], 'white', 2);
+        }
+    });
+
+    // Draw the objects edges
+    objects.forEach(object => {
         object.edges.forEach(edge => {
             const start = object.vertices[edge[0]];
             const end = object.vertices[edge[1]];
-            drawLine(start[0], start[1], end[0], end[1], object.color, 2);
+            const startOnCanvas = getPointOnCanvas(start, cameraPosition, canvasWidth, canvasHeight);
+            const endOnCanvas = getPointOnCanvas(end, cameraPosition, canvasWidth, canvasHeight);
+            if (!(startOnCanvas && endOnCanvas)) {
+                return; // Skip drawing if either point is behind the camera
+            }
+            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
         });
     });
+    // Draw the objects mesh
+    objects.forEach(object => {
+        if (object.triangleMesh) {
+            object.triangleMesh.forEach(triangle => {
+                const pointsOnCanvas = triangle.map(index => {
+                    const vertex = object.vertices[index];
+                    return getPointOnCanvas(vertex, cameraPosition, canvasWidth, canvasHeight);
+                });
+                // Check if all points are in front of the camera
+                if (pointsOnCanvas.some(point => point === null)) {
+                    return; // Skip rendering this triangle if any point is behind the camera
+                }
+                drawTriangle(pointsOnCanvas, object.triangleMeshColor);
+            });
+        }
+    });
+}
+
+function getPointOnCanvas([x, y, z], cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
+    // Translate the point relative to the camera position
+    const translatedPoint = vectorSubtract([x, y, z], cameraPosition);
+
+    // Rotate the point using the orientation matrix
+    const rotatedPoint = multiplyMatVec(transpose(orientationMatrix), translatedPoint)
+    
+    // Check if the point is in front of the camera
+    if (!isInFront(rotatedPoint)) {
+        return null; // Point is behind the camera, do not render
+    }
+
+    // Apply perspective projection
+    const aspectRatio = canvasWidth / canvasHeight;
+    const projectedPoint = applyPerspectiveProjection(rotatedPoint, FOV, aspectRatio);
+    
+    // Map the projected point to canvas coordinates
+    return mapToCanvasCoordinates(projectedPoint, canvasWidth, canvasHeight);
 }
 
 // When the arrow keys are pressed, move the camera
