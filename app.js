@@ -118,22 +118,31 @@ document.addEventListener('keydown', (event) => {
     const step = 10; // Step size for camera movement
     switch (event.key) {
         case 'ArrowLeft':
-            cameraPosition[0] -= step;
+            // No need to change camera Y (since we have no roll)
+            cameraPosition[0] -= step * orientationMatrix[0][0];
+            cameraPosition[2] -= step * orientationMatrix[2][0]; // Z-axis is inverted in canvas coordinates
             break;
         case 'ArrowRight':
-            cameraPosition[0] += step;
+            cameraPosition[0] += step * orientationMatrix[0][0];
+            cameraPosition[2] += step * orientationMatrix[2][0]; // Z-axis is inverted in canvas coordinates
             break;
-        case 'i':
+        case 'i': // Move up in global Y-axis
             cameraPosition[1] += step;
             break;
         case 'k':
             cameraPosition[1] -= step;
             break;
-        case 'ArrowUp': // Move forward
-            cameraPosition[2] += step;
+        case 'ArrowUp':
+            // Z-axis is inverted in canvas coordinates (move forward = subtract from Z)
+            cameraPosition[0] -= step * orientationMatrix[0][2];
+            cameraPosition[1] -= step * orientationMatrix[1][2];
+            cameraPosition[2] -= step * orientationMatrix[2][2]; 
             break;
-        case 'ArrowDown': // Move backward
-            cameraPosition[2] -= step;
+        case 'ArrowDown':
+            // inverse - move backward = add to Z
+            cameraPosition[0] += step * orientationMatrix[0][2];
+            cameraPosition[1] += step * orientationMatrix[1][2];
+            cameraPosition[2] += step * orientationMatrix[2][2];
             break;
         case 'd': // Rotate right (yaw)
             orientationMatrix = multiplyMatrices(yawRotationMatrix(sensitivity), orientationMatrix); // Rotate right by 5 degrees
