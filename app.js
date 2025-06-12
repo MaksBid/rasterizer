@@ -41,11 +41,11 @@ const testLines = [
     [[0, 0, axisLength], [5, 0, axisLength - 10]],
     [[0, 0, axisLength], [-5, 0, axisLength - 10]]
 ]
-const objects = []; 
+const testObjects = [triangularPrism]; 
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
-updateDisplay(camera, camera.orientation);
+updateDisplay(camera);
 
 function render(points, lines, objects, camera, displaySettings) {
     clear();
@@ -79,6 +79,39 @@ function render(points, lines, objects, camera, displaySettings) {
             const startOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
             drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
         } // Otherwise, both points are behind the camera and we skip drawing this line    
+    });
+
+    // Draw the objects
+    objects.forEach(object => {
+        object.edges.forEach(edge => {
+            const start = pointToCamera(object.vertices[edge[0]], camera);
+            const end = pointToCamera(object.vertices[edge[1]], camera);
+            if (isInFront(start) && isInFront(end)) {
+                const startOnCanvas = getPointOnCanvas(start, displaySettings);
+                const endOnCanvas = getPointOnCanvas(end, displaySettings);
+                drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
+            } else if (isInFront(start)) {
+                const startOnCanvas = getPointOnCanvas(start, displaySettings);
+                const clippedPoint = clipPoint(end, start);
+                const endOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
+                drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
+            } else if (isInFront(end)) {
+                const endOnCanvas = getPointOnCanvas(end, displaySettings);
+                const clippedPoint = clipPoint(start, end);
+                const startOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
+                drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
+            } // Otherwise, both points are behind the camera and we skip drawing this line
+        });
+        // Draw triangles
+        if (object.triangleMesh) {
+            object.triangleMesh.forEach(triangle => {
+                const pointsToCamera = triangle.map(index => pointToCamera(object.vertices[index], camera));
+                if (pointsToCamera.every(isInFront)) { // Only draw if all points are in front of the camera
+                    const projectedPoints = pointsToCamera.map(point => getPointOnCanvas(point, displaySettings));
+                    drawTriangle(projectedPoints, object.triangleMeshColor);
+                }
+            });
+        }
     });
 }
 
@@ -127,7 +160,7 @@ document.addEventListener('keydown', (event) => {
             break;
     }
     updateDisplay(camera);
-    render(testPoints, testLines, objects, camera, displaySettings);
+    render(testPoints, testLines, testObjects, camera, displaySettings);
 });
 
 function resizeCanvas() {
@@ -135,7 +168,7 @@ function resizeCanvas() {
     displaySettings.height = window.innerHeight;
     canvas.width = displaySettings.width;
     canvas.height = displaySettings.height;
-    render(testPoints, testLines, objects, camera, displaySettings);
+    render(testPoints, testLines, testObjects, camera, displaySettings);
 }
 
 function updateDisplay(camera) {
