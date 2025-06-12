@@ -8,8 +8,6 @@ import {
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
 
 const canvas = document.getElementById('canvas');
-let width = canvas.width;
-let height = canvas.height;
 
 // const Triangle3D = [
 //     [150, 50, 100],
@@ -22,8 +20,14 @@ let orientationMatrix = [
     [0, 1, 0], // Y-axis
     [0, 0, 1]  // Z-axis
 ]
-const FOV = 90; // Field of View in degrees 
+// const FOV = 90; // Field of View in degrees 
 const sensitivity = 5; // Sensitivity for camera rotation
+
+let displaySettings = {
+    width: canvas.width,
+    height: canvas.height,
+    FOV: 90 // Field of View in degrees
+}
 
 const axisLength = 100; // Length of the axis lines
 
@@ -47,14 +51,14 @@ const objects = [];
 resizeCanvas();
 updateDisplay(cameraPosition, orientationMatrix);
 
-function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
+function render(points, lines, objects, cameraPosition = [0, 0, 200], displaySettings) {
     clear();
 
     // Draw the points
     points.forEach(point => {
         const toCamera = pointToCamera(point, cameraPosition, orientationMatrix);
         if (isInFront(toCamera)) { // We would get null if the point is behind the camera
-            const pointOnCanvas = getPointOnCanvas(toCamera, canvasWidth, canvasHeight, FOV);
+            const pointOnCanvas = getPointOnCanvas(toCamera, displaySettings);
             drawCircle(pointOnCanvas[0], pointOnCanvas[1], 5, 'red', true);
         }
     });
@@ -64,22 +68,21 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
         const start = pointToCamera(line[0], cameraPosition, orientationMatrix);
         const end = pointToCamera(line[1], cameraPosition, orientationMatrix);
         if (isInFront(start) && isInFront(end)) {
-            const startOnCanvas = getPointOnCanvas(start, canvasWidth, canvasHeight, FOV);
-            const endOnCanvas = getPointOnCanvas(end, canvasWidth, canvasHeight, FOV);
+            const startOnCanvas = getPointOnCanvas(start, displaySettings);
+            const endOnCanvas = getPointOnCanvas(end, displaySettings);
             drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
         } else if (isInFront(start)) {
             console.log(start, end);
-            const startOnCanvas = getPointOnCanvas(start, canvasWidth, canvasHeight, FOV);
+            const startOnCanvas = getPointOnCanvas(start, displaySettings);
             const clippedPoint = clipPoint(end, start);
-            const endOnCanvas = getPointOnCanvas(clippedPoint, canvasWidth, canvasHeight, FOV);
+            const endOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
             drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
         } else if (isInFront(end)) {
-            const endOnCanvas = getPointOnCanvas(end, canvasWidth, canvasHeight, FOV);
+            const endOnCanvas = getPointOnCanvas(end, displaySettings);
             const clippedPoint = clipPoint(start, end);
-            const startOnCanvas = getPointOnCanvas(clippedPoint, canvasWidth, canvasHeight, FOV);
+            const startOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
             drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
         } // Otherwise, both points are behind the camera and we skip drawing this line    
-        
     });
 }
 
@@ -128,15 +131,15 @@ document.addEventListener('keydown', (event) => {
             break;
     }
     updateDisplay(cameraPosition, orientationMatrix);
-    render(testPoints, testLines, objects, cameraPosition, width, height);
+    render(testPoints, testLines, objects, cameraPosition, displaySettings);
 });
 
 function resizeCanvas() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    render(testPoints, testLines, objects, cameraPosition, width, height);
+    displaySettings.width = window.innerWidth;
+    displaySettings.height = window.innerHeight;
+    canvas.width = displaySettings.width;
+    canvas.height = displaySettings.height;
+    render(testPoints, testLines, objects, cameraPosition, displaySettings);
 }
 
 function updateDisplay([cameraX, cameraY, cameraZ], orientationMatrix) {
