@@ -1,11 +1,15 @@
 import { drawLine, clear, drawTriangle, drawCircle } from './canvas.js';
-import { applyPerspectiveProjection, mapToCanvasCoordinates, vectorSubtract, isInFront, multiplyMatVec, transpose, multiplyMatrices, yawRotationMatrix, pitchRotationMatrix } from './math.js';
+import { 
+    vectorSubtract, applyPerspectiveProjection, mapToCanvasCoordinates, 
+    multiplyMatVec, transpose, multiplyMatrices, 
+    isInFront, clipPoint, 
+    yawRotationMatrix, pitchRotationMatrix, 
+    getPointOnCanvas, pointToCamera } from './math.js';
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
 
 const canvas = document.getElementById('canvas');
 let width = canvas.width;
 let height = canvas.height;
-let aspectRatio = width / height;
 
 // const Triangle3D = [
 //     [150, 50, 100],
@@ -37,7 +41,7 @@ const testLines = [
     [[0, 0, axisLength], [5, 0, axisLength - 10]],
     [[0, 0, axisLength], [-5, 0, axisLength - 10]]
 ]
-const objects = [triangularPrism]; 
+const objects = []; 
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
@@ -48,69 +52,35 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], canvasWidt
 
     // Draw the points
     points.forEach(point => {
-        const pointOnCanvas = getPointOnCanvas(point, cameraPosition, canvasWidth, canvasHeight);
-        if (pointOnCanvas) { // We would get null if the point is behind the camera
+        const toCamera = pointToCamera(point, cameraPosition, orientationMatrix);
+        if (isInFront(toCamera)) { // We would get null if the point is behind the camera
+            const pointOnCanvas = getPointOnCanvas(toCamera, canvasWidth, canvasHeight, FOV);
             drawCircle(pointOnCanvas[0], pointOnCanvas[1], 5, 'red', true);
         }
     });
     // Draw the lines
     lines.forEach(line => {
-        const start = getPointOnCanvas(line[0], cameraPosition, canvasWidth, canvasHeight);
-        const end = getPointOnCanvas(line[1], cameraPosition, canvasWidth, canvasHeight);
-        if (start && end) { 
-            drawLine(start[0], start[1], end[0], end[1], 'white', 2);
-        }
+        // Points relative to the camera
+        const start = pointToCamera(line[0], cameraPosition, orientationMatrix);
+        const end = pointToCamera(line[1], cameraPosition, orientationMatrix);
+        if (isInFront(start) && isInFront(end)) {
+            const startOnCanvas = getPointOnCanvas(start, canvasWidth, canvasHeight, FOV);
+            const endOnCanvas = getPointOnCanvas(end, canvasWidth, canvasHeight, FOV);
+            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
+        } else if (isInFront(start)) {
+            console.log(start, end);
+            const startOnCanvas = getPointOnCanvas(start, canvasWidth, canvasHeight, FOV);
+            const clippedPoint = clipPoint(end, start);
+            const endOnCanvas = getPointOnCanvas(clippedPoint, canvasWidth, canvasHeight, FOV);
+            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
+        } else if (isInFront(end)) {
+            const endOnCanvas = getPointOnCanvas(end, canvasWidth, canvasHeight, FOV);
+            const clippedPoint = clipPoint(start, end);
+            const startOnCanvas = getPointOnCanvas(clippedPoint, canvasWidth, canvasHeight, FOV);
+            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
+        } // Otherwise, both points are behind the camera and we skip drawing this line    
+        
     });
-
-    // Draw the objects edges
-    objects.forEach(object => {
-        object.edges.forEach(edge => {
-            const start = object.vertices[edge[0]];
-            const end = object.vertices[edge[1]];
-            const startOnCanvas = getPointOnCanvas(start, cameraPosition, canvasWidth, canvasHeight);
-            const endOnCanvas = getPointOnCanvas(end, cameraPosition, canvasWidth, canvasHeight);
-            if (!(startOnCanvas && endOnCanvas)) {
-                return; // Skip drawing if either point is behind the camera
-            }
-            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
-        });
-    });
-    // Draw the objects mesh
-    objects.forEach(object => {
-        if (object.triangleMesh) {
-            object.triangleMesh.forEach(triangle => {
-                const pointsOnCanvas = triangle.map(index => {
-                    const vertex = object.vertices[index];
-                    return getPointOnCanvas(vertex, cameraPosition, canvasWidth, canvasHeight);
-                });
-                // Check if all points are in front of the camera
-                if (pointsOnCanvas.some(point => point === null)) {
-                    return; // Skip rendering this triangle if any point is behind the camera
-                }
-                drawTriangle(pointsOnCanvas, object.triangleMeshColor);
-            });
-        }
-    });
-}
-
-function getPointOnCanvas([x, y, z], cameraPosition = [0, 0, 200], canvasWidth = width, canvasHeight = height) {
-    // Translate the point relative to the camera position
-    const translatedPoint = vectorSubtract([x, y, z], cameraPosition);
-
-    // Rotate the point using the orientation matrix
-    const rotatedPoint = multiplyMatVec(transpose(orientationMatrix), translatedPoint)
-    
-    // Check if the point is in front of the camera
-    if (!isInFront(rotatedPoint)) {
-        return null; // Point is behind the camera, do not render
-    }
-
-    // Apply perspective projection
-    const aspectRatio = canvasWidth / canvasHeight;
-    const projectedPoint = applyPerspectiveProjection(rotatedPoint, FOV, aspectRatio);
-    
-    // Map the projected point to canvas coordinates
-    return mapToCanvasCoordinates(projectedPoint, canvasWidth, canvasHeight);
 }
 
 // When the arrow keys are pressed, move the camera
@@ -166,7 +136,6 @@ function resizeCanvas() {
     height = window.innerHeight;
     canvas.width = width;
     canvas.height = height;
-    aspectRatio = width / height;
     render(testPoints, testLines, objects, cameraPosition, width, height);
 }
 

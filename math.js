@@ -176,5 +176,61 @@ export function isInFront(point) {
     if (point.length !== 3) {
         throw new Error('Point must be a 3D vector');
     }
-    return point[2] < 0;
+    return point[2] <= 0;
+}
+
+export function clipPoint(pointBehind, pointInFront, nearZ = -0.1) {
+    // nearZ just slightly in front of the camera (negative Z goes into the scene)
+    if (pointBehind.length !== 3 || pointInFront.length !== 3) {
+        throw new Error('Both points must be 3D vectors');
+    }
+
+    // Clip the line segment defined by pointBehind and pointInFront against the near plane
+    if (pointBehind[2] >= nearZ && pointInFront[2] >= nearZ) {
+        console.warn('Both points are behind the near plane. Clipping will not be performed.');
+        return null; 
+    }
+
+    if (pointBehind[2] < nearZ && pointInFront[2] < nearZ) {
+        console.warn('Both points are in front of the near plane. No clipping needed.');
+        return pointBehind; 
+    }
+
+    if (pointBehind[2] < nearZ && pointInFront[2] >= nearZ) {
+        // Only pointInFront is behind the near plane
+        console.warn('Wrong point passed as behind point.');
+        return pointBehind; 
+    }
+
+    // One point is in front and one is behind the near plane
+    const t = (nearZ - pointBehind[2]) / (pointInFront[2] - pointBehind[2]);
+    const clippedPoint = [
+        pointBehind[0] + t * (pointInFront[0] - pointBehind[0]),
+        pointBehind[1] + t * (pointInFront[1] - pointBehind[1]),
+        nearZ
+    ];
+
+    return clippedPoint;
+}
+
+export function getPointOnCanvas(point, canvasWidth, canvasHeight, FOV) {
+    // Check if the point is in front of the camera
+    if (!isInFront(point)) {
+        throw new Error(`Point ${point} is behind the camera and cannot be projected.`);
+    }
+
+    // Apply perspective projection
+    const aspectRatio = canvasWidth / canvasHeight;
+    const projectedPoint = applyPerspectiveProjection(point, FOV, aspectRatio);
+    
+    // Map the projected point to canvas coordinates
+    return mapToCanvasCoordinates(projectedPoint, canvasWidth, canvasHeight);
+}
+
+export function pointToCamera(point, cameraPosition, cameraOrientation) {
+    // Translate the point relative to the camera position
+    const translatedPoint = vectorSubtract(point, cameraPosition);
+    // Rotate the point using the orientation matrix
+    const rotatedPoint = multiplyMatVec(transpose(cameraOrientation), translatedPoint);
+    return rotatedPoint;
 }
