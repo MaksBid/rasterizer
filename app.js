@@ -9,25 +9,21 @@ import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from 
 
 const canvas = document.getElementById('canvas');
 
-// const Triangle3D = [
-//     [150, 50, 100],
-//     [50, 150, 0],
-//     [150, 150, 0]
-// ];
-let cameraPosition = [0, 0, 200];
-let orientationMatrix = [
-    [1, 0, 0], // X-axis
-    [0, 1, 0], // Y-axis
-    [0, 0, 1]  // Z-axis
-]
-// const FOV = 90; // Field of View in degrees 
-const sensitivity = 5; // Sensitivity for camera rotation
-
 let displaySettings = {
     width: canvas.width,
     height: canvas.height,
     FOV: 90 // Field of View in degrees
 }
+let camera = {
+    position: [0, 0, 200], // Camera position in world coordinates
+    orientation: [ // Orientation matrix (identity matrix for no rotation)
+        [1, 0, 0], // X-axis
+        [0, 1, 0], // Y-axis
+        [0, 0, 1] // Z-axis
+    ]
+}
+
+const sensitivity = 5; // Sensitivity for camera rotation
 
 const axisLength = 100; // Length of the axis lines
 
@@ -49,14 +45,14 @@ const objects = [];
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
-updateDisplay(cameraPosition, orientationMatrix);
+updateDisplay(camera, camera.orientation);
 
-function render(points, lines, objects, cameraPosition = [0, 0, 200], displaySettings) {
+function render(points, lines, objects, camera, displaySettings) {
     clear();
 
     // Draw the points
     points.forEach(point => {
-        const toCamera = pointToCamera(point, cameraPosition, orientationMatrix);
+        const toCamera = pointToCamera(point, camera);
         if (isInFront(toCamera)) { // We would get null if the point is behind the camera
             const pointOnCanvas = getPointOnCanvas(toCamera, displaySettings);
             drawCircle(pointOnCanvas[0], pointOnCanvas[1], 5, 'red', true);
@@ -65,8 +61,8 @@ function render(points, lines, objects, cameraPosition = [0, 0, 200], displaySet
     // Draw the lines
     lines.forEach(line => {
         // Points relative to the camera
-        const start = pointToCamera(line[0], cameraPosition, orientationMatrix);
-        const end = pointToCamera(line[1], cameraPosition, orientationMatrix);
+        const start = pointToCamera(line[0], camera);
+        const end = pointToCamera(line[1], camera);
         if (isInFront(start) && isInFront(end)) {
             const startOnCanvas = getPointOnCanvas(start, displaySettings);
             const endOnCanvas = getPointOnCanvas(end, displaySettings);
@@ -92,46 +88,46 @@ document.addEventListener('keydown', (event) => {
     switch (event.key) {
         case 'ArrowLeft':
             // No need to change camera Y (since we have no roll)
-            cameraPosition[0] -= step * orientationMatrix[0][0];
-            cameraPosition[2] -= step * orientationMatrix[2][0]; // Z-axis is inverted in canvas coordinates
+            camera.position[0] -= step * camera.orientation[0][0];
+            camera.position[2] -= step * camera.orientation[2][0]; // Z-axis is inverted in canvas coordinates
             break;
         case 'ArrowRight':
-            cameraPosition[0] += step * orientationMatrix[0][0];
-            cameraPosition[2] += step * orientationMatrix[2][0]; // Z-axis is inverted in canvas coordinates
+            camera.position[0] += step * camera.orientation[0][0];
+            camera.position[2] += step * camera.orientation[2][0]; // Z-axis is inverted in canvas coordinates
             break;
         case 'i': // Move up in global Y-axis
-            cameraPosition[1] += step;
+            camera.position[1] += step;
             break;
         case 'k':
-            cameraPosition[1] -= step;
+            camera.position[1] -= step;
             break;
         case 'ArrowUp':
             // Z-axis is inverted in canvas coordinates (move forward = subtract from Z)
-            cameraPosition[0] -= step * orientationMatrix[0][2];
-            cameraPosition[1] -= step * orientationMatrix[1][2];
-            cameraPosition[2] -= step * orientationMatrix[2][2]; 
+            camera.position[0] -= step * camera.orientation[0][2];
+            camera.position[1] -= step * camera.orientation[1][2];
+            camera.position[2] -= step * camera.orientation[2][2]; 
             break;
         case 'ArrowDown':
             // inverse - move backward = add to Z
-            cameraPosition[0] += step * orientationMatrix[0][2];
-            cameraPosition[1] += step * orientationMatrix[1][2];
-            cameraPosition[2] += step * orientationMatrix[2][2];
+            camera.position[0] += step * camera.orientation[0][2];
+            camera.position[1] += step * camera.orientation[1][2];
+            camera.position[2] += step * camera.orientation[2][2];
             break;
         case 'd': // Rotate right (yaw)
-            orientationMatrix = multiplyMatrices(yawRotationMatrix(sensitivity), orientationMatrix); // Rotate right by 5 degrees
+            camera.orientation = multiplyMatrices(yawRotationMatrix(sensitivity), camera.orientation); // Rotate right by 5 degrees
             break;
         case 'a': // Rotate left (yaw)
-            orientationMatrix = multiplyMatrices(yawRotationMatrix(-sensitivity), orientationMatrix); // Rotate left by 5 degrees
+            camera.orientation = multiplyMatrices(yawRotationMatrix(-sensitivity), camera.orientation); // Rotate left by 5 degrees
             break;
         case 'w': // Rotate up (pitch)
-            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(sensitivity)); // Rotate down by 5 degrees
+            camera.orientation = multiplyMatrices(camera.orientation, pitchRotationMatrix(sensitivity)); // Rotate down by 5 degrees
             break;
         case 's': // Rotate down (pitch)
-            orientationMatrix = multiplyMatrices(orientationMatrix, pitchRotationMatrix(-sensitivity)); // Rotate up by 5 degrees
+            camera.orientation = multiplyMatrices(camera.orientation, pitchRotationMatrix(-sensitivity)); // Rotate up by 5 degrees
             break;
     }
-    updateDisplay(cameraPosition, orientationMatrix);
-    render(testPoints, testLines, objects, cameraPosition, displaySettings);
+    updateDisplay(camera);
+    render(testPoints, testLines, objects, camera, displaySettings);
 });
 
 function resizeCanvas() {
@@ -139,15 +135,18 @@ function resizeCanvas() {
     displaySettings.height = window.innerHeight;
     canvas.width = displaySettings.width;
     canvas.height = displaySettings.height;
-    render(testPoints, testLines, objects, cameraPosition, displaySettings);
+    render(testPoints, testLines, objects, camera, displaySettings);
 }
 
-function updateDisplay([cameraX, cameraY, cameraZ], orientationMatrix) {
+function updateDisplay(camera) {
+    const cameraX = camera.position[0];
+    const cameraY = camera.position[1];
+    const cameraZ = camera.position[2];
     document.getElementById('x').textContent = "X: " + cameraX.toFixed(2);
     document.getElementById('y').textContent = "Y: " + cameraY.toFixed(2);
     document.getElementById('z').textContent = "Z: " + cameraZ.toFixed(2);
     let textMatrix = "Orientation Matrix:\n";
-    orientationMatrix.forEach(row => {
+    camera.orientation.forEach(row => {
         textMatrix += "[" + row.map(value => value.toFixed(2)).join(' ') + "]" + '\n';
     });
     document.getElementById('orientation').textContent = textMatrix;

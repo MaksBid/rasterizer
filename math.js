@@ -227,10 +227,10 @@ export function getPointOnCanvas(point, displaySettings) {
     return mapToCanvasCoordinates(projectedPoint, displaySettings.width, displaySettings.height);
 }
 
-export function pointToCamera(point, cameraPosition, cameraOrientation) {
+export function pointToCamera(point, camera) {
     // Translate the point relative to the camera position
-    const translatedPoint = vectorSubtract(point, cameraPosition);
+    const translatedPoint = vectorSubtract(point, camera.position);
     // Rotate the point using the orientation matrix
-    const rotatedPoint = multiplyMatVec(transpose(cameraOrientation), translatedPoint);
+    const rotatedPoint = multiplyMatVec(transpose(camera.orientation), translatedPoint);
     return rotatedPoint;
 }
