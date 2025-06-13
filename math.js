@@ -42,6 +42,28 @@ export function multiplyMatrices(m1, m2) {
         throw new Error('Number of columns in first matrix must equal number of rows in second matrix');
     }
 
+    // Handle the 3x3 case in a more optimized way
+    if (m1.length === 3 && m1[0].length === 3 && m2.length === 3 && m2[0].length === 3) {
+        return [
+            [
+                m1[0][0] * m2[0][0] + m1[0][1] * m2[1][0] + m1[0][2] * m2[2][0],
+                m1[0][0] * m2[0][1] + m1[0][1] * m2[1][1] + m1[0][2] * m2[2][1],
+                m1[0][0] * m2[0][2] + m1[0][1] * m2[1][2] + m1[0][2] * m2[2][2]
+            ],
+            [
+                m1[1][0] * m2[0][0] + m1[1][1] * m2[1][0] + m1[1][2] * m2[2][0],
+                m1[1][0] * m2[0][1] + m1[1][1] * m2[1][1] + m1[1][2] * m2[2][1],
+                m1[1][0] * m2[0][2] + m1[1][1] * m2[1][2] + m1[1][2] * m2[2][2]
+            ],
+            [
+                m1[2][0] * m2[0][0] + m1[2][1] * m2[1][0] + m1[2][2] * m2[2][0],
+                m1[2][0] * m2[0][1] + m1[2][1] * m2[1][1] + m1[2][2] * m2[2][1],
+                m1[2][0] * m2[0][2] + m1[2][1] * m2[1][2] + m1[2][2] * m2[2][2]
+            ]
+        ];
+    }
+
+    // General case for any size matrices
     const result = Array.from({ length: m1.length }, () => Array(m2[0].length).fill(0));
 
     for (let i = 0; i < m1.length; i++) {
@@ -60,6 +82,16 @@ export function multiplyMatVec(matrix, vector) {
         throw new Error('Matrix columns must match vector length');
     }
 
+    // Handle the 3x3 case in a more optimized way
+    if (matrix.length === 3 && matrix[0].length === 3 && vector.length === 3) {
+        return [
+            matrix[0][0] * vector[0] + matrix[0][1] * vector[1] + matrix[0][2] * vector[2],
+            matrix[1][0] * vector[0] + matrix[1][1] * vector[1] + matrix[1][2] * vector[2],
+            matrix[2][0] * vector[0] + matrix[2][1] * vector[1] + matrix[2][2] * vector[2]
+        ];
+    }
+
+    // General case for any size matrix and vector
     const result = Array(matrix.length).fill(0);
     for (let i = 0; i < matrix.length; i++) {
         for (let j = 0; j < vector.length; j++) {
