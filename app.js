@@ -68,7 +68,6 @@ function render(points, lines, objects, camera, displaySettings) {
             const endOnCanvas = getPointOnCanvas(end, displaySettings);
             drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
         } else if (isInFront(start)) {
-            console.log(start, end);
             const startOnCanvas = getPointOnCanvas(start, displaySettings);
             const clippedPoint = clipPoint(end, start);
             const endOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);

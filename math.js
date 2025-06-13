@@ -176,7 +176,7 @@ export function isInFront(point) {
     if (point.length !== 3) {
         throw new Error('Point must be a 3D vector');
     }
-    return point[2] <= 0;
+    return point[2] < 0;
 }
 
 export function clipPoint(pointBehind, pointInFront, nearZ = -0.1) {
@@ -214,11 +214,6 @@ export function clipPoint(pointBehind, pointInFront, nearZ = -0.1) {
 }
 
 export function getPointOnCanvas(point, displaySettings) {
-    // Check if the point is in front of the camera
-    if (!isInFront(point)) {
-        throw new Error(`Point ${point} is behind the camera and cannot be projected.`);
-    }
-
     // Apply perspective projection
     const aspectRatio = displaySettings.width / displaySettings.height;
     const projectedPoint = applyPerspectiveProjection(point, displaySettings.FOV, aspectRatio);
