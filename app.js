@@ -15,7 +15,7 @@ let displaySettings = {
     FOV: 90 // Field of View in degrees
 }
 let camera = {
-    position: [0, 0, 200], // Camera position in world coordinates
+    position: [50, 50, 200], // Camera position in world coordinates
     orientation: [ // Orientation matrix (identity matrix for no rotation)
         [1, 0, 0], // X-axis
         [0, 1, 0], // Y-axis
@@ -23,23 +23,25 @@ let camera = {
     ]
 }
 
-const sensitivity = 5; // Sensitivity for camera rotation
-
-const axisLength = 100; // Length of the axis lines
+const config = {
+    sensitivity: 5, // Sensitivity for camera rotation
+    step: 10, // Step size for camera movement
+    axisLength: 200 // Length of the axis lines
+}
 
 const testPoints = [[80, 50, 50]];
 const testLines = [
     // Axis lines
-    [[-axisLength, 0, 0], [axisLength, 0, 0]],
-    [[0, -axisLength, 0], [0, axisLength, 0]],
-    [[0, 0, -axisLength], [0, 0, axisLength]],
+    [[-config.axisLength, 0, 0], [config.axisLength, 0, 0]],
+    [[0, -config.axisLength, 0], [0, config.axisLength, 0]],
+    [[0, 0, -config.axisLength], [0, 0, config.axisLength]],
     // Arrows
-    [[axisLength, 0, 0], [axisLength - 10, 5, 0]],
-    [[axisLength, 0, 0], [axisLength - 10, -5, 0]],
-    [[0, axisLength, 0], [5, axisLength - 10, 0]],
-    [[0, axisLength, 0], [-5, axisLength - 10, 0]],
-    [[0, 0, axisLength], [5, 0, axisLength - 10]],
-    [[0, 0, axisLength], [-5, 0, axisLength - 10]]
+    [[config.axisLength, 0, 0], [config.axisLength - 10, 5, 0]],
+    [[config.axisLength, 0, 0], [config.axisLength - 10, -5, 0]],
+    [[0, config.axisLength, 0], [5, config.axisLength - 10, 0]],
+    [[0, config.axisLength, 0], [-5, config.axisLength - 10, 0]],
+    [[0, 0, config.axisLength], [5, 0, config.axisLength - 10]],
+    [[0, 0, config.axisLength], [-5, 0, config.axisLength - 10]]
 ]
 const testObjects = [triangularPrism]; 
 
@@ -116,46 +118,45 @@ function render(points, lines, objects, camera, displaySettings) {
 
 // When the arrow keys are pressed, move the camera
 document.addEventListener('keydown', (event) => {
-    const step = 10; // Step size for camera movement
     switch (event.key) {
         case 'ArrowLeft':
             // No need to change camera Y (since we have no roll)
-            camera.position[0] -= step * camera.orientation[0][0];
-            camera.position[2] -= step * camera.orientation[2][0]; // Z-axis is inverted in canvas coordinates
+            camera.position[0] -= config.step * camera.orientation[0][0];
+            camera.position[2] -= config.step * camera.orientation[2][0]; // Z-axis is inverted in canvas coordinates
             break;
         case 'ArrowRight':
-            camera.position[0] += step * camera.orientation[0][0];
-            camera.position[2] += step * camera.orientation[2][0]; // Z-axis is inverted in canvas coordinates
+            camera.position[0] += config.step * camera.orientation[0][0];
+            camera.position[2] += config.step * camera.orientation[2][0]; // Z-axis is inverted in canvas coordinates
             break;
         case 'i': // Move up in global Y-axis
-            camera.position[1] += step;
+            camera.position[1] += config.step;
             break;
         case 'k':
-            camera.position[1] -= step;
+            camera.position[1] -= config.step;
             break;
         case 'ArrowUp':
             // Z-axis is inverted in canvas coordinates (move forward = subtract from Z)
-            camera.position[0] -= step * camera.orientation[0][2];
-            camera.position[1] -= step * camera.orientation[1][2];
-            camera.position[2] -= step * camera.orientation[2][2]; 
+            camera.position[0] -= config.step * camera.orientation[0][2];
+            camera.position[1] -= config.step * camera.orientation[1][2];
+            camera.position[2] -= config.step * camera.orientation[2][2]; 
             break;
         case 'ArrowDown':
             // inverse - move backward = add to Z
-            camera.position[0] += step * camera.orientation[0][2];
-            camera.position[1] += step * camera.orientation[1][2];
-            camera.position[2] += step * camera.orientation[2][2];
+            camera.position[0] += config.step * camera.orientation[0][2];
+            camera.position[1] += config.step * camera.orientation[1][2];
+            camera.position[2] += config.step * camera.orientation[2][2];
             break;
         case 'd': // Rotate right (yaw)
-            camera.orientation = multiplyMatrices(yawRotationMatrix(sensitivity), camera.orientation); // Rotate right by 5 degrees
+            camera.orientation = multiplyMatrices(yawRotationMatrix(config.sensitivity), camera.orientation); // Rotate right by 5 degrees
             break;
         case 'a': // Rotate left (yaw)
-            camera.orientation = multiplyMatrices(yawRotationMatrix(-sensitivity), camera.orientation); // Rotate left by 5 degrees
+            camera.orientation = multiplyMatrices(yawRotationMatrix(-config.sensitivity), camera.orientation); // Rotate left by 5 degrees
             break;
         case 'w': // Rotate up (pitch)
-            camera.orientation = multiplyMatrices(camera.orientation, pitchRotationMatrix(sensitivity)); // Rotate down by 5 degrees
+            camera.orientation = multiplyMatrices(camera.orientation, pitchRotationMatrix(config.sensitivity)); // Rotate down by 5 degrees
             break;
         case 's': // Rotate down (pitch)
-            camera.orientation = multiplyMatrices(camera.orientation, pitchRotationMatrix(-sensitivity)); // Rotate up by 5 degrees
+            camera.orientation = multiplyMatrices(camera.orientation, pitchRotationMatrix(-config.sensitivity)); // Rotate up by 5 degrees
             break;
     }
     updateDisplay(camera);
