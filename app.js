@@ -1,10 +1,11 @@
-import { drawLine, clear, drawTriangle, drawCircle } from './canvas.js';
+import { drawLine, clear, drawTriangle, drawCircle, drawQuad } from './canvas.js';
 import { 
     vectorSubtract, applyPerspectiveProjection, mapToCanvasCoordinates, 
     multiplyMatVec, transpose, multiplyMatrices, 
     isInFront, clipPoint, 
     yawRotationMatrix, pitchRotationMatrix, 
-    getPointOnCanvas, pointToCamera } from './math.js';
+    getPointOnCanvas, pointToCamera, 
+    clipTriangle} from './math.js';
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
 
 const canvas = document.getElementById('canvas');
@@ -110,6 +111,14 @@ function render(points, lines, objects, camera, displaySettings) {
                 if (pointsToCamera.every(isInFront)) { // Only draw if all points are in front of the camera
                     const projectedPoints = pointsToCamera.map(point => getPointOnCanvas(point, displaySettings));
                     drawTriangle(projectedPoints, object.triangleMeshColor);
+                } else if (pointsToCamera.some(isInFront)) { // Else clip
+                    const clipped = clipTriangle(pointsToCamera);
+                    const projectedPoints = clipped.map(point => getPointOnCanvas(point, displaySettings));
+                    if (projectedPoints.length === 3) { 
+                        drawTriangle(projectedPoints, object.triangleMeshColor);
+                    } else if (projectedPoints.length === 4) { 
+                        drawQuad(projectedPoints, object.triangleMeshColor);
+                    }
                 }
             });
         }

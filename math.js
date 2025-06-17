@@ -211,7 +211,11 @@ export function isInFront(point) {
     return point[2] < 0;
 }
 
-export function clipPoint(pointBehind, pointInFront, nearZ = -0.1) {
+export function clipPoint(pointBehind, pointInFront, nearZ = -0.001) {
+    // This function assumes that camera-relative translation and rotation 
+    // have already been applied to the points. 
+    // So camera is at the origin (0, 0, 0) and looking down the negative Z-axis.
+
     // nearZ just slightly in front of the camera (negative Z goes into the scene)
     if (pointBehind.length !== 3 || pointInFront.length !== 3) {
         throw new Error('Both points must be 3D vectors');
@@ -243,6 +247,57 @@ export function clipPoint(pointBehind, pointInFront, nearZ = -0.1) {
     ];
 
     return clippedPoint;
+}
+
+
+export function clipTriangle(points) {
+    // Assuming points are in camera coordinates (i.e., already translated and rotated)
+    // console.log('Clipping triangle with points:', points);
+    if (points.length !== 3) {
+        throw new Error('clipTriangle requires exactly 3 points');
+    }
+
+    const indicesInFront = [];
+    const indicesBehind = [];
+    points.forEach((point, index) => {
+        if (isInFront(point)) {
+            indicesInFront.push(index);
+        } else {
+            indicesBehind.push(index);
+        }
+    });
+
+    // Check if all points are in front of the camera
+    switch (indicesInFront.length) {
+        case 3:
+            // All points are in front of the camera, no clipping needed
+            throw new Error('All points are in front of the camera. No clipping needed.');
+        case 0:
+            // All points are behind the camera, no triangle to draw
+            throw new Error('All points are behind the camera. No triangle to draw.');
+        case 1:
+            // One point is in front, two are behind
+            // The result will be a triangle with one original point and two clipped
+            const pointInFront = points[indicesInFront[0]]
+            const clippedTriangle = [pointInFront];
+
+            clippedTriangle.push(clipPoint(points[indicesBehind[0]], pointInFront));
+            clippedTriangle.push(clipPoint(points[indicesBehind[1]], pointInFront));
+
+            return clippedTriangle;
+        case 2:
+            // Two points are in front, one is behind
+            // The result will be a quadrilateral with two original points and two new
+            const pointBehind = points[indicesBehind[0]]
+            const clippedQuad = [points[indicesInFront[0]], points[indicesInFront[1]]];
+
+            clippedQuad.push(clipPoint(pointBehind, clippedQuad[0]));
+            clippedQuad.push(clipPoint(pointBehind, clippedQuad[1]));
+
+            return clippedQuad;
+        default:
+            throw new Error(`Unexpected number of points in front: ${indicesInFront.length}`);
+    }
 }
 
 export function getPointOnCanvas(point, displaySettings) {

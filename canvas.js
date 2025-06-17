@@ -40,3 +40,22 @@ export function drawTriangle(points, color = 'black', width = 1) {
     ctx.closePath();
     ctx.fill();
 }
+
+export function drawQuad(points, color = 'black', width = 1) {
+    if (points.length !== 4) {
+        throw new Error('drawQuad requires exactly 4 points');
+    }
+    if (points.some(point => point.length !== 2)) {
+        throw new Error('Each point in drawQuad must be a 2D coordinate');
+    }
+
+    // Draw a filled quad
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(points[0][0], points[0][1]);
+    ctx.lineTo(points[1][0], points[1][1]);
+    ctx.lineTo(points[2][0], points[2][1]);
+    ctx.lineTo(points[3][0], points[3][1]);
+    ctx.closePath();
+    ctx.fill();
+}
