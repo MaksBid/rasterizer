@@ -45,16 +45,21 @@ const testLines = [
     [[0, 0, config.axisLength], [-5, 0, config.axisLength - 10]]
 ]
 const testObjects = [triangularPrism]; 
+const scene = {
+    points: testPoints,
+    lines: testLines,
+    objects: testObjects
+}
 
 // Initial render (called inside resizeCanvas)
 resizeCanvas();
 updateDisplay(camera);
 
-function render(points, lines, objects, camera, displaySettings) {
+function render(scene, camera, displaySettings) {
     clear();
 
     // Draw the points
-    points.forEach(point => {
+    scene.points.forEach(point => {
         const toCamera = pointToCamera(point, camera);
         if (isInFront(toCamera)) { // We would get null if the point is behind the camera
             const pointOnCanvas = getPointOnCanvas(toCamera, displaySettings);
@@ -62,7 +67,7 @@ function render(points, lines, objects, camera, displaySettings) {
         }
     });
     // Draw the lines
-    lines.forEach(line => {
+    scene.lines.forEach(line => {
         // Points relative to the camera
         const start = pointToCamera(line[0], camera);
         const end = pointToCamera(line[1], camera);
@@ -84,7 +89,7 @@ function render(points, lines, objects, camera, displaySettings) {
     });
 
     // Draw the objects
-    objects.forEach(object => {
+    scene.objects.forEach(object => {
         object.edges.forEach(edge => {
             const start = pointToCamera(object.vertices[edge[0]], camera);
             const end = pointToCamera(object.vertices[edge[1]], camera);
@@ -169,7 +174,7 @@ document.addEventListener('keydown', (event) => {
             break;
     }
     updateDisplay(camera);
-    render(testPoints, testLines, testObjects, camera, displaySettings);
+    render(scene, camera, displaySettings);
 });
 
 function resizeCanvas() {
@@ -177,7 +182,7 @@ function resizeCanvas() {
     displaySettings.height = window.innerHeight;
     canvas.width = displaySettings.width;
     canvas.height = displaySettings.height;
-    render(testPoints, testLines, testObjects, camera, displaySettings);
+    render(scene, camera, displaySettings);
 }
 
 function updateDisplay(camera) {
