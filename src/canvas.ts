@@ -28,10 +28,6 @@ export function drawCircle([x, y]: Vec2, radius: number, color: any = 'black', f
 }
 
 export function drawTriangle(points: Triangle2D, color: any = 'black', width: number = 1) {
-    if (points.length !== 3) {
-        throw new Error('drawTriangle requires exactly 3 points');
-    }
-
     // Draw a filled triangle
     ctx.fillStyle = color;
     ctx.lineWidth = width;
@@ -44,14 +40,7 @@ export function drawTriangle(points: Triangle2D, color: any = 'black', width: nu
 }
 
 export function drawQuad(points: Quad2D, color: any = 'black', width: number = 1) {
-    if (points.length !== 4) {
-        throw new Error('drawQuad requires exactly 4 points');
-    }
-    if (points.some(point => point.length !== 2)) {
-        throw new Error('Each point in drawQuad must be a 2D coordinate');
-    }
-
-    // Draw a filled quad
+    // Draw a filled quadrilateral
     ctx.fillStyle = color;
     ctx.lineWidth = width;
     ctx.beginPath();

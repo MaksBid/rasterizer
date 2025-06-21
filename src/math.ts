@@ -97,9 +97,6 @@ export function pitchRotationMatrix(delta: number): Matrix3x3 {
 export function isInFront(point: Vec3): boolean {
     // Check if the point's z is lower than zero
     // This assumes a right-handed coordinate system where the camera looks down the negative Z-axis
-    if (point.length !== 3) {
-        throw new Error('Point must be a 3D vector');
-    }
     return point[2] < 0;
 }
 
@@ -109,9 +106,7 @@ export function clipPoint(pointBehind: Vec3, pointInFront: Vec3, nearZ: number =
     // So camera is at the origin (0, 0, 0) and looking down the negative Z-axis.
 
     // nearZ just slightly in front of the camera (negative Z goes into the scene)
-    if (pointBehind.length !== 3 || pointInFront.length !== 3) {
-        throw new Error('Both points must be 3D vectors');
-    } else if (pointBehind[2] >= nearZ && pointInFront[2] >= nearZ) {
+    if (pointBehind[2] >= nearZ && pointInFront[2] >= nearZ) {
         throw new Error('Both points are in front of the near plane. No clipping needed.');
     } else if (pointBehind[2] < nearZ && pointInFront[2] < nearZ) {
         throw new Error('Both points are behind the near plane. Impossible to clip.');
@@ -137,10 +132,6 @@ export function clipPoint(pointBehind: Vec3, pointInFront: Vec3, nearZ: number =
 
 export function clipTriangle(points: Triangle3D): Vec3[] {
     // Assuming points are in camera coordinates (i.e., already translated and rotated)
-    // console.log('Clipping triangle with points:', points);
-    if (points.length !== 3) {
-        throw new Error('clipTriangle requires exactly 3 points');
-    }
 
     const indicesInFront: number[] = [];
     const indicesBehind: number[] = [];
