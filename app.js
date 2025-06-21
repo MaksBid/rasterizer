@@ -57,13 +57,31 @@ updateDisplay(camera);
 
 function render(scene, camera, displaySettings) {
     clear();
+    const queue = sceneToQueue(scene, camera, displaySettings);
+    renderQueue(queue);
+}
+
+function sceneToQueue(scene, camera, displaySettings) {
+    const queue = [];
+    // Each rendered primitive looks like this:
+    // {
+    // type: 'point' | 'line' | 'triangle' | 'quad'
+    // screenCoordinates: [[x1, y1], [x2, y2], ...], // 2D, One for point, two for line etc.
+    // depth: Number, // Depth in camera coordinates (bigger is closer)
+    // color: 'red' | 'white' | 'blue' etc.
+    // }
 
     // Draw the points
     scene.points.forEach(point => {
         const toCamera = pointToCamera(point, camera);
         if (isInFront(toCamera)) { // We would get null if the point is behind the camera
             const pointOnCanvas = getPointOnCanvas(toCamera, displaySettings);
-            drawCircle(pointOnCanvas[0], pointOnCanvas[1], 5, 'red', true);
+            queue.push({
+                type: 'point',
+                screenCoordinates: [pointOnCanvas],
+                depth: toCamera[2], // Z-coordinate in camera space
+                color: 'red' // ATM all the points are red
+            });
         }
     });
     // Draw the lines
@@ -74,17 +92,32 @@ function render(scene, camera, displaySettings) {
         if (isInFront(start) && isInFront(end)) {
             const startOnCanvas = getPointOnCanvas(start, displaySettings);
             const endOnCanvas = getPointOnCanvas(end, displaySettings);
-            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
+            queue.push({
+                type: 'line',
+                screenCoordinates: [startOnCanvas, endOnCanvas],
+                depth: (start[2] + end[2]) / 2, // Average depth for sorting
+                color: 'white' // ATM all the lines are white
+            });
         } else if (isInFront(start)) {
             const startOnCanvas = getPointOnCanvas(start, displaySettings);
             const clippedPoint = clipPoint(end, start);
             const endOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
-            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
+            queue.push({
+                type: 'line',
+                screenCoordinates: [startOnCanvas, endOnCanvas],
+                depth: (start[2] + end[2]) / 2, // Average depth for sorting (of the unclipped)
+                color: 'white' // ATM all the lines are white
+            });
         } else if (isInFront(end)) {
             const endOnCanvas = getPointOnCanvas(end, displaySettings);
             const clippedPoint = clipPoint(start, end);
             const startOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
-            drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], 'white', 2);
+            queue.push({
+                type: 'line',
+                screenCoordinates: [startOnCanvas, endOnCanvas],
+                depth: (start[2] + end[2]) / 2, // Average depth for sorting (of the unclipped)
+                color: 'white' // ATM all the lines are white
+            });
         } // Otherwise, both points are behind the camera and we skip drawing this line    
     });
 
@@ -96,36 +129,91 @@ function render(scene, camera, displaySettings) {
             if (isInFront(start) && isInFront(end)) {
                 const startOnCanvas = getPointOnCanvas(start, displaySettings);
                 const endOnCanvas = getPointOnCanvas(end, displaySettings);
-                drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
+                queue.push({
+                    type: 'line',
+                    screenCoordinates: [startOnCanvas, endOnCanvas],
+                    depth: (start[2] + end[2]) / 2, // Average depth for sorting
+                    color: object.color // Use the object's color
+                });
             } else if (isInFront(start)) {
                 const startOnCanvas = getPointOnCanvas(start, displaySettings);
                 const clippedPoint = clipPoint(end, start);
                 const endOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
-                drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
+                queue.push({
+                    type: 'line',
+                    screenCoordinates: [startOnCanvas, endOnCanvas],
+                    depth: (start[2] + end[2]) / 2, // Average depth for sorting (of the unclipped)
+                    color: object.color // Use the object's color
+                });
             } else if (isInFront(end)) {
                 const endOnCanvas = getPointOnCanvas(end, displaySettings);
                 const clippedPoint = clipPoint(start, end);
                 const startOnCanvas = getPointOnCanvas(clippedPoint, displaySettings);
-                drawLine(startOnCanvas[0], startOnCanvas[1], endOnCanvas[0], endOnCanvas[1], object.color, 2);
+                queue.push({
+                    type: 'line',
+                    screenCoordinates: [startOnCanvas, endOnCanvas],
+                    depth: (start[2] + end[2]) / 2, // Average depth for sorting (of the unclipped)
+                    color: object.color // Use the object's color
+                });
             } // Otherwise, both points are behind the camera and we skip drawing this line
         });
         // Draw triangles
         if (object.triangleMesh) {
             object.triangleMesh.forEach(triangle => {
                 const pointsToCamera = triangle.map(index => pointToCamera(object.vertices[index], camera));
-                if (pointsToCamera.every(isInFront)) { // Only draw if all points are in front of the camera
+                if (pointsToCamera.every(isInFront)) { // If all are in front, draw as it is
                     const projectedPoints = pointsToCamera.map(point => getPointOnCanvas(point, displaySettings));
-                    drawTriangle(projectedPoints, object.triangleMeshColor);
-                } else if (pointsToCamera.some(isInFront)) { // Else clip
+                    queue.push({
+                        type: 'triangle',
+                        screenCoordinates: projectedPoints,
+                        depth: (pointsToCamera[0][2] + pointsToCamera[1][2] + pointsToCamera[2][2]) / 3, // Average depth for sorting
+                        color: object.triangleMeshColor // Use the object's triangle mesh color
+                    });
+                } else if (pointsToCamera.some(isInFront)) { // Else clip and draw
                     const clipped = clipTriangle(pointsToCamera);
                     const projectedPoints = clipped.map(point => getPointOnCanvas(point, displaySettings));
                     if (projectedPoints.length === 3) { 
-                        drawTriangle(projectedPoints, object.triangleMeshColor);
+                        queue.push({
+                            type: 'triangle',
+                            screenCoordinates: projectedPoints,
+                            depth: (pointsToCamera[0][2] + pointsToCamera[1][2] + pointsToCamera[2][2]) / 3, // Average depth for sorting
+                            color: object.triangleMeshColor // Use the object's triangle mesh color
+                        });
                     } else if (projectedPoints.length === 4) { 
-                        drawQuad(projectedPoints, object.triangleMeshColor);
+                        queue.push({
+                            type: 'quad',
+                            screenCoordinates: projectedPoints,
+                            depth: (pointsToCamera[0][2] + pointsToCamera[1][2] + pointsToCamera[2][2]) / 3, // Average depth for sorting
+                            color: object.triangleMeshColor // Use the object's triangle mesh color
+                        });
                     }
                 }
             });
+        }
+    });
+    return queue;
+}
+
+function renderQueue(queue) {
+    // Sort the queue by depth (Z-coordinate in camera space)
+    // Points closer to the camera should be drawn last
+    queue.sort((a, b) => a.depth - b.depth);
+    queue.forEach(item => {
+        switch (item.type) {
+            case 'point':
+                drawCircle(item.screenCoordinates[0][0], item.screenCoordinates[0][1], 5, item.color, true);
+                break;
+            case 'line':
+                drawLine(item.screenCoordinates[0][0], item.screenCoordinates[0][1], 
+                         item.screenCoordinates[1][0], item.screenCoordinates[1][1], 
+                         item.color, 2);
+                break;
+            case 'triangle':
+                drawTriangle(item.screenCoordinates, item.color);
+                break;
+            case 'quad':
+                drawQuad(item.screenCoordinates, item.color);
+                break;
         }
     });
 }
