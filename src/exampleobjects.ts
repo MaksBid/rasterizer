@@ -1,4 +1,5 @@
-export const cube = {
+import type { Vec3, Vec2, IObject } from './types/types.ts';
+export const cube: IObject = {
     vertices: [
         [-20, -20, -20],
         [80, -20, -20],
@@ -26,7 +27,7 @@ export const cube = {
     triangleMeshColor: '#000099' // Color for the triangle mesh
 };
 
-export const tetrahedron = {
+export const tetrahedron: IObject = {
     vertices: [
         [0, 100, 0],
         [-50, 0, -50],
@@ -49,7 +50,7 @@ export const tetrahedron = {
     triangleMeshColor: '#008800'
 };
 
-export const octahedron = {
+export const octahedron: IObject = {
     vertices: [
         [0, 100, 0],     // top (0)
         [0, -100, 0],    // bottom (1)
@@ -83,7 +84,7 @@ export const octahedron = {
     triangleMeshColor: '#880088'
 };
 
-export const triangularPrism = {
+export const triangularPrism: IObject = {
     vertices: [ // x - left-right, y - up-down, z - front-back
         [0, 0, 0],
         [100, 0, 0],
@@ -114,7 +115,7 @@ export const triangularPrism = {
     triangleMeshColor: '#888800' // Color for the triangle mesh
 };
 
-export const pentagonalPrism = {
+export const pentagonalPrism: IObject = {
     vertices: [
         // front pentagon
         [0, 100, 0],
