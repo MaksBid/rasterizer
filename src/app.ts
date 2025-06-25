@@ -7,6 +7,7 @@ import {
     getPointOnCanvas, pointToCamera, 
     clipTriangle} from './math.js';
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
+import { parseObj, readTextFile } from './objhandler.js';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
@@ -48,9 +49,12 @@ const testLines: Line3D[] = [
 const testObjects: IObject[] = [triangularPrism]; 
 
 const scene: IScene = {
-    points: testPoints,
-    lines: testLines,
-    objects: testObjects
+    // points: testPoints,
+    // lines: testLines,
+    // objects: testObjects
+    points: [],
+    lines: [],
+    objects: []
 }
 
 // Initial render (called inside resizeCanvas)
@@ -287,3 +291,21 @@ function updateDisplay(camera: ICamera) {
 }
 
 window.addEventListener('resize', resizeCanvas);
+
+const input = document.getElementById('fileInput') as HTMLInputElement;
+
+input.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+        const text = await readTextFile(file);
+        const object = parseObj(text, 100); // Scale is 100 for now
+        scene.objects.push(object);
+        render(scene, camera, displaySettings);
+        updateDisplay(camera);
+        input.value = ''; // Clear the input after reading the file
+    } catch (error) {
+        console.error('Error reading file:', error);
+    }
+});
