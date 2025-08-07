@@ -309,3 +309,19 @@ input.addEventListener('change', async () => {
         console.error('Error reading file:', error);
     }
 });
+
+// Object insertion menu toggle
+document.getElementById('objectInsertMenuBtn')?.addEventListener('click', () => {
+    const objectInsert = document.getElementById('objectInsert');
+    if (objectInsert) {
+        objectInsert.style.display = objectInsert.style.display === 'none' ? 'flex' : 'none';
+    }
+});
+
+// 'Add object' button
+document.getElementById('addObjectBtn')?.addEventListener('click', () => {
+    const objectInsert = document.getElementById('objectInsert');
+    if (objectInsert) {
+        objectInsert.style.display = 'none'; // Hide the object insertion menu
+    }
+});

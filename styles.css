@@ -23,22 +23,43 @@ canvas {
 #positionInfo pre {
     margin: 0;
 }
-#uploadFile {
+
+#objectInsertMenuBtn {
     position: absolute;
     top: 10px;
+    right: 10px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 20px;
+    z-index: 1000;
+    background-color: #005500;
+    color: #fff;
+    padding: 6px 12px;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+#objectInsert {
+    position: absolute;
+    top: 50px;
     right: 10px;
     font-family: Arial, sans-serif;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     font-size: 16px;
+    gap: 20px;
+    align-items: center;
+    border: 1px solid #444;
+    padding: 20px;
+    display: none; /* Initially hidden */
 }
 
 #uploadFile input[type="file"] {
-    display: none; /* hides the default file input */
+    display: none; 
 }
 
-.uploadLabel {
+.clickable {
     background-color: #222;
     color: #fff;
     padding: 6px 12px;
@@ -46,9 +67,58 @@ canvas {
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.2s ease;
+}
+
+.clickable input {
     user-select: none;
 }
 
-.uploadLabel:hover {
+.clickable:hover {
     background-color: #333;
+}
+
+#objectSelect {
+    width: 200px;
+    padding: 6px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #222;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+#objectControls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rangeBox {
+    display: grid;
+    grid-template-columns: 80px 1fr 40px;
+    align-items: center;
+    gap: 10px;
+}
+
+label {
+    font-weight: bold;
+    text-align: right;
+    color: #ffffff;
+}
+
+.rangeBox p {
+    margin: 0;
+    font-weight: bold;
+    text-align: center;
+    width: 40px;
+    color: #ffffff;
+}
+
+#addObjectBtn {
+    width: 80%;
+    font-weight: bold;
+    background-color: #00bb40;
+    color: #fff;
 }

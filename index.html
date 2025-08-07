@@ -14,10 +14,39 @@
         <pre id="z">Z: 0</pre>
         <pre id="orientation"></pre>
     </div>
-    <div id="uploadFile">
-        <label for="fileInput" class="uploadLabel">Upload .obj</label>
-        <input type="file" id="fileInput" accept=".obj">
+    <button id="objectInsertMenuBtn" class="clickable">+</button>
+    <div id="objectInsert">
+        <div id="uploadFile">
+            <label for="fileInput" class="clickable" class="uploadLabel">Upload .obj</label>
+            <input type="file" id="fileInput" accept=".obj">
+        </div>
+        <select id="objectSelect">
+            <option value="cube">Cube</option>
+            <option value="tetrahedron">Tetrahedron</option>
+            <option value="octahedron">Octahedron</option>
+            <option value="triangularPrism">Triangular Prism</option>
+            <option value="pentagonalPrism">Pentagonal Prism</option>
+        </select>
+        <div id="objectControls">
+            <div class="rangeBox">
+                <label for="X">X Position</label>
+                <input type="range" id="X" min="-100" max="100" step="1" value="0">
+                <p id="XValue">0</p>
+            </div>
+            <div class="rangeBox">
+                <label for="Y">Y Position</label>
+                <input type="range" id="Y" min="-100" max="100" step="1" value="0">
+                <p id="YValue">0</p>
+            </div>
+            <div class="rangeBox">
+                <label for="Z">Z Position</label>
+                <input type="range" id="Z" min="-100" max="100" step="1" value="0">
+                <p id="ZValue">0</p>
+            </div>
+        </div>
+        <button id="addObjectBtn" class="clickable">Add Object</button>
     </div>
+    
     <script src="./dist/app.js" type="module"></script>
 </body>
 </html>
