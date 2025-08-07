@@ -5,7 +5,8 @@ import {
     isInFront, clipPoint, 
     yawRotationMatrix, pitchRotationMatrix, 
     getPointOnCanvas, pointToCamera, 
-    clipTriangle} from './math.js';
+    clipTriangle,
+    applyTranslation} from './math.js';
 import { cube, pentagonalPrism, tetrahedron, octahedron, triangularPrism } from './exampleobjects.js';
 import { parseObj, readTextFile } from './objhandler.js';
 
@@ -48,6 +49,10 @@ const testLines: Line3D[] = [
 ]
 const testObjects: IObject[] = [triangularPrism]; 
 
+// Track the original and temporary state of the object being edited
+let selectedObject: number | null = null; // Index of the selected object
+let originalObject: IObject | null = null; // Original state of the object
+let tempObject: IObject | null = null; // Temporary state for previewing edits
 const scene: IScene = {
     // points: testPoints,
     // lines: testLines,
@@ -314,14 +319,97 @@ input.addEventListener('change', async () => {
 document.getElementById('objectInsertMenuBtn')?.addEventListener('click', () => {
     const objectInsert = document.getElementById('objectInsert');
     if (objectInsert) {
-        objectInsert.style.display = objectInsert.style.display === 'none' ? 'flex' : 'none';
+        if (!objectInsert.style.display || objectInsert.style.display === 'none') {
+            // Show the object insertion menu
+            objectInsert.style.display = 'flex';
+            scene.objects.push(cube); // Add a default object (cube) to the scene
+            selectedObject = scene.objects.length - 1; // Set to the last added object (0-based index)
+            originalObject = JSON.parse(JSON.stringify(cube)); // Deep copy of the original object
+            tempObject = JSON.parse(JSON.stringify(cube)); // Temporary state for previewing edits
+            // updateDisplay(camera);
+            render(scene, camera, displaySettings);
+        } else {
+            // If the object insertion menu is visible, hide it
+            objectInsert.style.display = 'none';
+            
+            if (selectedObject !== null) {
+                // If an object was selected, render the scene with the updated objects
+                scene.objects.splice(selectedObject, 1); // Remove the last added object
+                selectedObject = null; // Reset the selected object
+                originalObject = null; // Reset the stable object reference
+                tempObject = null; // Reset the temporary object reference
+                // updateDisplay(camera);
+                render(scene, camera, displaySettings);
+            }
+        }
     }
 });
 
 // 'Add object' button
 document.getElementById('addObjectBtn')?.addEventListener('click', () => {
     const objectInsert = document.getElementById('objectInsert');
-    if (objectInsert) {
+    if (objectInsert && selectedObject !== null && tempObject !== null) {
+        // Commit the temporary object to the scene
+        scene.objects[selectedObject] = JSON.parse(JSON.stringify(tempObject)); 
+        selectedObject = null; // Reset the selected object
+        originalObject = null; // Reset the stable object reference
+        tempObject = null; // Reset the temporary object reference
         objectInsert.style.display = 'none'; // Hide the object insertion menu
+        render(scene, camera, displaySettings); // Render the scene without the object insertion menu
+    }
+});
+
+// Event listeners for inputs
+document.getElementById('xInput')?.addEventListener('input', (event) => {
+    const input = event.target as HTMLInputElement;
+    const xValue = parseFloat(input.value);
+    const yValue = parseFloat((document.getElementById('yInput') as HTMLInputElement).value);
+    const zValue = parseFloat((document.getElementById('zInput') as HTMLInputElement).value);
+    console.log('X Input:', xValue);
+    document.getElementById('xValue')!.textContent = xValue.toFixed(0); // Update the displayed value
+    if (!isNaN(xValue) && selectedObject !== null && originalObject !== null && tempObject !== null) {
+        // Update the selected object's position
+        tempObject.vertices = originalObject.vertices.map(vertex => {
+            return applyTranslation(vertex, [xValue, yValue, zValue]); // Translate X, Y, Z
+        });
+        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
+        // updateDisplay(camera);
+        render(scene, camera, displaySettings);
+    }
+});
+
+document.getElementById('yInput')?.addEventListener('input', (event) => {
+    const input = event.target as HTMLInputElement;
+    const yValue = parseFloat(input.value);
+    const xValue = parseFloat((document.getElementById('xInput') as HTMLInputElement).value);
+    const zValue = parseFloat((document.getElementById('zInput') as HTMLInputElement).value);
+    console.log('Y Input:', yValue);
+    document.getElementById('yValue')!.textContent = yValue.toFixed(0); // Update the displayed value
+    if (!isNaN(yValue) && selectedObject !== null && originalObject !== null && tempObject !== null) {
+        // Update the selected object's position
+        tempObject.vertices = originalObject.vertices.map(vertex => {
+            return applyTranslation(vertex, [xValue, yValue, zValue]); // Translate Y
+        });
+        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
+        // updateDisplay(camera);
+        render(scene, camera, displaySettings);
+    }
+});
+
+document.getElementById('zInput')?.addEventListener('input', (event) => {
+    const input = event.target as HTMLInputElement;
+    const zValue = parseFloat(input.value);
+    const xValue = parseFloat((document.getElementById('xInput') as HTMLInputElement).value);
+    const yValue = parseFloat((document.getElementById('yInput') as HTMLInputElement).value);
+    console.log('Z Input:', zValue);
+    document.getElementById('zValue')!.textContent = zValue.toFixed(0); // Update the displayed value
+    if (!isNaN(zValue) && selectedObject !== null && originalObject !== null && tempObject !== null) {
+        // Update the selected object's position
+        tempObject.vertices = originalObject.vertices.map(vertex => {
+            return applyTranslation(vertex, [xValue, yValue, zValue]); // Translate Z
+        });
+        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
+        // updateDisplay(camera);
+        render(scene, camera, displaySettings);
     }
 });
