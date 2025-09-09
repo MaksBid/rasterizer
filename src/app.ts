@@ -359,6 +359,17 @@ document.getElementById('addObjectBtn')?.addEventListener('click', () => {
     }
 });
 
+function translateTempObject(x: number, y: number, z: number) {
+    if (selectedObject !== null && originalObject !== null && tempObject !== null) {
+        // Update the selected object's position
+        tempObject.vertices = originalObject.vertices.map(vertex => {
+            return applyTranslation(vertex, [x, y, z]); // Translate X, Y, Z
+        });
+        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
+        render(scene, camera, displaySettings);
+    }
+}
+
 // Event listeners for inputs
 document.getElementById('xInput')?.addEventListener('input', (event) => {
     const input = event.target as HTMLInputElement;
@@ -367,15 +378,7 @@ document.getElementById('xInput')?.addEventListener('input', (event) => {
     const zValue = parseFloat((document.getElementById('zInput') as HTMLInputElement).value);
     console.log('X Input:', xValue);
     document.getElementById('xValue')!.textContent = xValue.toFixed(0); // Update the displayed value
-    if (!isNaN(xValue) && selectedObject !== null && originalObject !== null && tempObject !== null) {
-        // Update the selected object's position
-        tempObject.vertices = originalObject.vertices.map(vertex => {
-            return applyTranslation(vertex, [xValue, yValue, zValue]); // Translate X, Y, Z
-        });
-        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
-        // updateDisplay(camera);
-        render(scene, camera, displaySettings);
-    }
+    translateTempObject(xValue, yValue, zValue);
 });
 
 document.getElementById('yInput')?.addEventListener('input', (event) => {
@@ -385,15 +388,7 @@ document.getElementById('yInput')?.addEventListener('input', (event) => {
     const zValue = parseFloat((document.getElementById('zInput') as HTMLInputElement).value);
     console.log('Y Input:', yValue);
     document.getElementById('yValue')!.textContent = yValue.toFixed(0); // Update the displayed value
-    if (!isNaN(yValue) && selectedObject !== null && originalObject !== null && tempObject !== null) {
-        // Update the selected object's position
-        tempObject.vertices = originalObject.vertices.map(vertex => {
-            return applyTranslation(vertex, [xValue, yValue, zValue]); // Translate Y
-        });
-        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
-        // updateDisplay(camera);
-        render(scene, camera, displaySettings);
-    }
+    translateTempObject(xValue, yValue, zValue);
 });
 
 document.getElementById('zInput')?.addEventListener('input', (event) => {
@@ -403,13 +398,5 @@ document.getElementById('zInput')?.addEventListener('input', (event) => {
     const yValue = parseFloat((document.getElementById('yInput') as HTMLInputElement).value);
     console.log('Z Input:', zValue);
     document.getElementById('zValue')!.textContent = zValue.toFixed(0); // Update the displayed value
-    if (!isNaN(zValue) && selectedObject !== null && originalObject !== null && tempObject !== null) {
-        // Update the selected object's position
-        tempObject.vertices = originalObject.vertices.map(vertex => {
-            return applyTranslation(vertex, [xValue, yValue, zValue]); // Translate Z
-        });
-        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
-        // updateDisplay(camera);
-        render(scene, camera, displaySettings);
-    }
+    translateTempObject(xValue, yValue, zValue);
 });
