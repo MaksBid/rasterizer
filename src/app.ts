@@ -47,10 +47,11 @@ const testLines: Line3D[] = [
     [[0, 0, config.axisLength], [5, 0, config.axisLength - 10]],
     [[0, 0, config.axisLength], [-5, 0, config.axisLength - 10]]
 ]
-const testObjects: IObject[] = [triangularPrism]; 
+const testObjects: IObject[] = [triangularPrism];
+const exampleObjectsArray: IObject[] = [cube, tetrahedron, octahedron, triangularPrism, pentagonalPrism]; 
 
 // Track the original and temporary state of the object being edited
-let selectedObject: number | null = null; // Index of the selected object
+let selectedObjectIndex: number | null = null; // Index of the selected object
 let originalObject: IObject | null = null; // Original state of the object
 let tempObject: IObject | null = null; // Temporary state for previewing edits
 const scene: IScene = {
@@ -323,7 +324,7 @@ document.getElementById('objectInsertMenuBtn')?.addEventListener('click', () => 
             // Show the object insertion menu
             objectInsert.style.display = 'flex';
             scene.objects.push(cube); // Add a default object (cube) to the scene
-            selectedObject = scene.objects.length - 1; // Set to the last added object (0-based index)
+            selectedObjectIndex = scene.objects.length - 1; // Set to the last added object (0-based index)
             originalObject = JSON.parse(JSON.stringify(cube)); // Deep copy of the original object
             tempObject = JSON.parse(JSON.stringify(cube)); // Temporary state for previewing edits
             // updateDisplay(camera);
@@ -332,10 +333,10 @@ document.getElementById('objectInsertMenuBtn')?.addEventListener('click', () => 
             // If the object insertion menu is visible, hide it
             objectInsert.style.display = 'none';
             
-            if (selectedObject !== null) {
+            if (selectedObjectIndex !== null) {
                 // If an object was selected, render the scene with the updated objects
-                scene.objects.splice(selectedObject, 1); // Remove the last added object
-                selectedObject = null; // Reset the selected object
+                scene.objects.splice(selectedObjectIndex, 1); // Remove the last added object
+                selectedObjectIndex = null; // Reset the selected object
                 originalObject = null; // Reset the stable object reference
                 tempObject = null; // Reset the temporary object reference
                 // updateDisplay(camera);
@@ -348,10 +349,10 @@ document.getElementById('objectInsertMenuBtn')?.addEventListener('click', () => 
 // 'Add object' button
 document.getElementById('addObjectBtn')?.addEventListener('click', () => {
     const objectInsert = document.getElementById('objectInsert');
-    if (objectInsert && selectedObject !== null && tempObject !== null) {
+    if (objectInsert && selectedObjectIndex !== null && tempObject !== null) {
         // Commit the temporary object to the scene
-        scene.objects[selectedObject] = JSON.parse(JSON.stringify(tempObject)); 
-        selectedObject = null; // Reset the selected object
+        scene.objects[selectedObjectIndex] = JSON.parse(JSON.stringify(tempObject)); 
+        selectedObjectIndex = null; // Reset the selected object
         originalObject = null; // Reset the stable object reference
         tempObject = null; // Reset the temporary object reference
         objectInsert.style.display = 'none'; // Hide the object insertion menu
@@ -359,13 +360,30 @@ document.getElementById('addObjectBtn')?.addEventListener('click', () => {
     }
 });
 
+// Event listener for the select dropdown
+document.getElementById('objectSelect')?.addEventListener('change', (event) => {
+    const select = event.target as HTMLSelectElement;
+    const selectedIndex = select.selectedIndex;
+    console.log('Selected object type index:', selectedIndex);
+
+    scene.objects.splice(selectedObjectIndex!, 1); // Remove the last added object
+    scene.objects.push(exampleObjectsArray[selectedIndex]); // Add the selected object to the scene
+    selectedObjectIndex = scene.objects.length - 1; // Set to the last added object (0-based index)
+    
+    // Deep copies of the original and temporary object states
+    originalObject = JSON.parse(JSON.stringify(exampleObjectsArray[selectedIndex]));
+    tempObject = JSON.parse(JSON.stringify(exampleObjectsArray[selectedIndex]));
+
+    render(scene, camera, displaySettings);
+});
+
 function translateTempObject(x: number, y: number, z: number) {
-    if (selectedObject !== null && originalObject !== null && tempObject !== null) {
+    if (selectedObjectIndex !== null && originalObject !== null && tempObject !== null) {
         // Update the selected object's position
         tempObject.vertices = originalObject.vertices.map(vertex => {
             return applyTranslation(vertex, [x, y, z]); // Translate X, Y, Z
         });
-        scene.objects[selectedObject] = tempObject; // Update the scene with the temporary object
+        scene.objects[selectedObjectIndex] = tempObject; // Update the scene with the temporary object
         render(scene, camera, displaySettings);
     }
 }
@@ -376,7 +394,6 @@ document.getElementById('xInput')?.addEventListener('input', (event) => {
     const xValue = parseFloat(input.value);
     const yValue = parseFloat((document.getElementById('yInput') as HTMLInputElement).value);
     const zValue = parseFloat((document.getElementById('zInput') as HTMLInputElement).value);
-    console.log('X Input:', xValue);
     document.getElementById('xValue')!.textContent = xValue.toFixed(0); // Update the displayed value
     translateTempObject(xValue, yValue, zValue);
 });
@@ -386,7 +403,6 @@ document.getElementById('yInput')?.addEventListener('input', (event) => {
     const yValue = parseFloat(input.value);
     const xValue = parseFloat((document.getElementById('xInput') as HTMLInputElement).value);
     const zValue = parseFloat((document.getElementById('zInput') as HTMLInputElement).value);
-    console.log('Y Input:', yValue);
     document.getElementById('yValue')!.textContent = yValue.toFixed(0); // Update the displayed value
     translateTempObject(xValue, yValue, zValue);
 });
@@ -396,7 +412,6 @@ document.getElementById('zInput')?.addEventListener('input', (event) => {
     const zValue = parseFloat(input.value);
     const xValue = parseFloat((document.getElementById('xInput') as HTMLInputElement).value);
     const yValue = parseFloat((document.getElementById('yInput') as HTMLInputElement).value);
-    console.log('Z Input:', zValue);
     document.getElementById('zValue')!.textContent = zValue.toFixed(0); // Update the displayed value
     translateTempObject(xValue, yValue, zValue);
 });
