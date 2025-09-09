@@ -351,10 +351,13 @@ document.getElementById('addObjectBtn')?.addEventListener('click', () => {
     const objectInsert = document.getElementById('objectInsert');
     if (objectInsert && selectedObjectIndex !== null && tempObject !== null) {
         // Commit the temporary object to the scene
-        scene.objects[selectedObjectIndex] = JSON.parse(JSON.stringify(tempObject)); 
+        scene.objects[selectedObjectIndex] = JSON.parse(JSON.stringify(tempObject));
+
         selectedObjectIndex = null; // Reset the selected object
         originalObject = null; // Reset the stable object reference
         tempObject = null; // Reset the temporary object reference
+        
+        resetObjectMenuInputs(); // Reset the inputs in the object insertion menu
         objectInsert.style.display = 'none'; // Hide the object insertion menu
         render(scene, camera, displaySettings); // Render the scene without the object insertion menu
     }
@@ -415,3 +418,13 @@ document.getElementById('zInput')?.addEventListener('input', (event) => {
     document.getElementById('zValue')!.textContent = zValue.toFixed(0); // Update the displayed value
     translateTempObject(xValue, yValue, zValue);
 });
+
+function resetObjectMenuInputs() {
+    (document.getElementById('objectSelect') as HTMLSelectElement).selectedIndex = 0;
+    (document.getElementById('xInput') as HTMLInputElement).value = '0';
+    (document.getElementById('yInput') as HTMLInputElement).value = '0';
+    (document.getElementById('zInput') as HTMLInputElement).value = '0';
+    document.getElementById('xValue')!.textContent = '0';
+    document.getElementById('yValue')!.textContent = '0';
+    document.getElementById('zValue')!.textContent = '0';
+}
